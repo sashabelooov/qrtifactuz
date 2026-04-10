@@ -9,7 +9,7 @@ from app.models.user import User
 from app.models.profile import Profile
 
 
-async def register_user(db: AsyncSession, email: str, password: str, full_name: str | None) -> dict:
+async def register_user(db: AsyncSession, email: str, password: str) -> dict:
     result = await db.execute(select(User).where(User.email == email))
     if result.scalar_one_or_none():
         raise BadRequestException("Email already registered")
@@ -21,10 +21,7 @@ async def register_user(db: AsyncSession, email: str, password: str, full_name: 
     db.add(user)
     await db.flush()
 
-    profile = Profile(
-        user_id=user.id,
-        full_name=full_name,
-    )
+    profile = Profile(user_id=user.id)
     db.add(profile)
     await db.commit()
     await db.refresh(user)
@@ -34,6 +31,7 @@ async def register_user(db: AsyncSession, email: str, password: str, full_name: 
         "refresh_token": create_refresh_token(str(user.id)),
         "token_type": "bearer",
     }
+
 
 
 async def login_user(db: AsyncSession, email: str, password: str) -> dict:
