@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from app.api.v1.museum.router import router as museums_router
 
 from app.core.config import settings
 from app.core.exceptions import AppException, app_exception_handler
@@ -25,3 +26,4 @@ app.add_exception_handler(AppException, app_exception_handler)
 
 app.include_router(auth_router, prefix="/api/v1")
 app.include_router(profiles_router, prefix="/api/v1")
+app.include_router(museums_router, prefix="/api/v1")
