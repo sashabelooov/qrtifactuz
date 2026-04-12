@@ -24,6 +24,10 @@ class Museum(Base):
     halls: Mapped[list["Hall"]] = relationship("Hall", back_populates="museum", lazy="selectin")
 
 
+    def __repr__(self) -> str:
+        return self.name
+
+
 class Hall(Base):
     __tablename__ = "halls"
 
