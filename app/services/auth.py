@@ -7,6 +7,8 @@ from app.core.exceptions import BadRequestException, UnauthorizedException
 from app.core.security import create_access_token, create_refresh_token, decode_token, hash_password, verify_password
 from app.models.user import User
 from app.models.profile import Profile
+from app.services.otp import generate_otp, save_otp, verify_otp, delete_otp
+from app.services.email import send_otp_email
 
 
 async def register_user(db: AsyncSession, email: str, password: str) -> dict:
@@ -17,6 +19,7 @@ async def register_user(db: AsyncSession, email: str, password: str) -> dict:
     user = User(
         email=email,
         hashed_password=hash_password(password),
+        is_active=False,
     )
     db.add(user)
     await db.flush()
@@ -26,12 +29,36 @@ async def register_user(db: AsyncSession, email: str, password: str) -> dict:
     await db.commit()
     await db.refresh(user)
 
+    otp = generate_otp()
+    await save_otp(str(user.id), otp)
+    await send_otp_email(email, otp)
+
+    return {"message": "Registration successful. Check your email for the verification code."}
+
+
+async def verify_email(db: AsyncSession, email: str, otp: str) -> dict:
+    result = await db.execute(select(User).where(User.email == email))
+    user = result.scalar_one_or_none()
+
+    if not user:
+        raise BadRequestException("User not found")
+
+    if user.is_active:
+        raise BadRequestException("Account already verified")
+
+    is_valid = await verify_otp(str(user.id), otp)
+    if not is_valid:
+        raise BadRequestException("Invalid or expired verification code")
+
+    user.is_active = True
+    await db.commit()
+    await delete_otp(str(user.id))
+
     return {
         "access_token": create_access_token(str(user.id)),
         "refresh_token": create_refresh_token(str(user.id)),
         "token_type": "bearer",
     }
-
 
 
 async def login_user(db: AsyncSession, email: str, password: str) -> dict:
@@ -42,7 +69,7 @@ async def login_user(db: AsyncSession, email: str, password: str) -> dict:
         raise UnauthorizedException("Invalid email or password")
 
     if not user.is_active:
-        raise UnauthorizedException("Account is inactive")
+        raise UnauthorizedException("Account not verified. Check your email for the verification code.")
 
     return {
         "access_token": create_access_token(str(user.id)),

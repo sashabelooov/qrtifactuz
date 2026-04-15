@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>QRTifact — Museum Exhibits</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; min-height: 100vh; }
+
+    nav {
+      background: #1a1a2e;
+      padding: 0 32px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .nav-logo { color: white; font-size: 20px; font-weight: 700; text-decoration: none; }
+    .nav-logo span { color: #818cf8; }
+
+    .nav-right { display: flex; align-items: center; gap: 16px; }
+    .nav-email { color: #a5b4fc; font-size: 14px; }
+
+    .nav-link {
+      color: white;
+      text-decoration: none;
+      font-size: 14px;
+      padding: 6px 14px;
+      border-radius: 6px;
+      transition: background 0.2s;
+    }
+    .nav-link:hover { background: rgba(255,255,255,0.1); }
+
+    .nav-btn {
+      background: #4f46e5;
+      color: white;
+      border: none;
+      padding: 7px 16px;
+      border-radius: 6px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background 0.2s;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .nav-btn:hover { background: #4338ca; }
+    .nav-btn.outline { background: transparent; border: 1px solid rgba(255,255,255,0.3); }
+    .nav-btn.outline:hover { background: rgba(255,255,255,0.1); }
+
+    .container { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
+
+    .filters {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 32px;
+      flex-wrap: wrap;
+    }
+
+    .filters h1 { font-size: 24px; color: #1a1a2e; flex: 1; }
+
+    .lang-btns { display: flex; gap: 6px; }
+
+    .lang-btn {
+      padding: 6px 14px;
+      border: 1.5px solid #e0e0e0;
+      background: white;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      color: #555;
+    }
+    .lang-btn.active { background: #4f46e5; border-color: #4f46e5; color: white; }
+
+    select {
+      padding: 7px 12px;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 6px;
+      font-size: 13px;
+      background: white;
+      cursor: pointer;
+      outline: none;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 24px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      text-decoration: none;
+      color: inherit;
+      display: block;
+    }
+    .card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.12); }
+
+    .card-image { width: 100%; height: 200px; object-fit: cover; display: block; }
+
+    .card-placeholder {
+      width: 100%;
+      height: 200px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 48px;
+    }
+
+    .card-body { padding: 16px; }
+    .card-title { font-size: 15px; font-weight: 600; color: #1a1a2e; margin-bottom: 6px; line-height: 1.4; }
+    .card-museum { font-size: 12px; color: #888; margin-bottom: 10px; }
+    .card-stats { display: flex; gap: 12px; font-size: 12px; color: #aaa; }
+
+    .empty { text-align: center; padding: 80px 20px; color: #888; grid-column: 1 / -1; }
+    .empty h2 { font-size: 20px; margin-bottom: 8px; color: #555; }
+    .loading { text-align: center; padding: 80px; color: #888; grid-column: 1 / -1; }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="index.html" class="nav-logo">QR<span>Tifact</span></a>
+    <div class="nav-right" id="navRight"></div>
+  </nav>
+
+  <div class="container">
+    <div class="filters">
+      <h1>Exhibits</h1>
+      <div class="lang-btns">
+        <button class="lang-btn" data-lang="uz" onclick="setLang('uz')">UZ</button>
+        <button class="lang-btn" data-lang="ru" onclick="setLang('ru')">RU</button>
+        <button class="lang-btn" data-lang="en" onclick="setLang('en')">EN</button>
+      </div>
+      <select id="museumFilter" onchange="renderGrid()">
+        <option value="">All Museums</option>
+      </select>
+    </div>
+    <div class="grid" id="grid">
+      <div class="loading">Loading exhibits...</div>
+    </div>
+  </div>
+
+  <script>
+    const API = 'http://127.0.0.1:8000/api/v1';
+
+    let allExhibits = [];
+    let museumMap = {};
+
+    function getLang() { return localStorage.getItem('lang') || 'uz'; }
+
+    function setLang(lang) {
+      localStorage.setItem('lang', lang);
+      document.querySelectorAll('.lang-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.lang === lang);
+      });
+      renderGrid();
+    }
+
+    function renderNav() {
+      const email = localStorage.getItem('user_email');
+      const navRight = document.getElementById('navRight');
+      if (email) {
+        navRight.innerHTML = `
+          <span class="nav-email">${email}</span>
+          <a href="profile.html" class="nav-link">Profile</a>
+          <button class="nav-btn outline" onclick="logout()">Logout</button>
+        `;
+      } else {
+        navRight.innerHTML = `<a href="auth.html" class="nav-btn">Login</a>`;
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('user_email');
+      localStorage.removeItem('user_id');
+      renderNav();
+    }
+
+    function getTranslation(exhibit, lang) {
+      return exhibit.translations.find(t => t.language === lang)
+        || exhibit.translations[0]
+        || { title: 'Untitled', description: '' };
+    }
+
+    function getCoverImage(exhibit) {
+      const cover = exhibit.media.find(m => m.is_cover) || exhibit.media[0];
+      return cover?.public_url || null;
+    }
+
+    function renderGrid() {
+      const lang = getLang();
+      const museumId = document.getElementById('museumFilter').value;
+      const grid = document.getElementById('grid');
+
+      let exhibits = allExhibits;
+      if (museumId) exhibits = exhibits.filter(e => e.museum_id === museumId);
+
+      if (!exhibits.length) {
+        grid.innerHTML = `<div class="empty"><h2>No exhibits found</h2><p>Try changing the filters or check back later.</p></div>`;
+        return;
+      }
+
+      grid.innerHTML = exhibits.map(exhibit => {
+        const t = getTranslation(exhibit, lang);
+        const img = getCoverImage(exhibit);
+        const museum = museumMap[exhibit.museum_id];
+        return `
+          <a class="card" href="exhibit.html?slug=${exhibit.slug}">
+            ${img
+              ? `<img class="card-image" src="${img}" alt="${t.title}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+              : ''
+            }
+            <div class="card-placeholder" style="${img ? 'display:none' : ''}">🏛️</div>
+            <div class="card-body">
+              <div class="card-title">${t.title}</div>
+              <div class="card-museum">${museum?.name || 'Museum'}</div>
+              <div class="card-stats">
+                <span>👁 ${exhibit.views_count}</span>
+                <span>🎵 ${exhibit.listens_count}</span>
+              </div>
+            </div>
+          </a>
+        `;
+      }).join('');
+    }
+
+    async function init() {
+      try {
+        const [museumsRes, exhibitsRes] = await Promise.all([
+          fetch(`${API}/museums`),
+          fetch(`${API}/exhibits?status=published`)
+        ]);
+
+        const museums = await museumsRes.json();
+        allExhibits = await exhibitsRes.json();
+        museumMap = Object.fromEntries(museums.map(m => [m.id, m]));
+
+        const select = document.getElementById('museumFilter');
+        museums.forEach(m => {
+          select.innerHTML += `<option value="${m.id}">${m.name}</option>`;
+        });
+
+        renderGrid();
+      } catch {
+        document.getElementById('grid').innerHTML = `
+          <div class="empty"><h2>Failed to load exhibits</h2><p>Make sure the API server is running.</p></div>
+        `;
+      }
+    }
+
+    document.querySelectorAll('.lang-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.lang === getLang());
+    });
+
+    renderNav();
+    init();
+  </script>
+</body>
+</html>

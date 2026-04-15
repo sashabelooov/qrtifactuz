@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>QRTifact — Profile</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; min-height: 100vh; }
+
+    nav {
+      background: #1a1a2e;
+      padding: 0 32px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .nav-logo { color: white; font-size: 20px; font-weight: 700; text-decoration: none; }
+    .nav-logo span { color: #818cf8; }
+
+    .nav-right { display: flex; align-items: center; gap: 16px; }
+    .nav-email { color: #a5b4fc; font-size: 14px; }
+
+    .nav-link {
+      color: white;
+      text-decoration: none;
+      font-size: 14px;
+      padding: 6px 14px;
+      border-radius: 6px;
+      transition: background 0.2s;
+    }
+    .nav-link:hover { background: rgba(255,255,255,0.1); }
+
+    .nav-btn {
+      background: #4f46e5;
+      color: white;
+      border: none;
+      padding: 7px 16px;
+      border-radius: 6px;
+      font-size: 14px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .nav-btn.outline { background: transparent; border: 1px solid rgba(255,255,255,0.3); }
+    .nav-btn.outline:hover { background: rgba(255,255,255,0.1); }
+
+    .container { max-width: 560px; margin: 0 auto; padding: 40px 24px; }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: #4f46e5;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 24px;
+    }
+    .back-link:hover { text-decoration: underline; }
+
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 40px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    }
+
+    .avatar {
+      width: 72px;
+      height: 72px;
+      background: #4f46e5;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 28px;
+      font-weight: 700;
+      margin: 0 auto 8px;
+    }
+
+    .user-email { text-align: center; font-size: 14px; color: #888; margin-bottom: 32px; }
+
+    h2 { font-size: 20px; color: #1a1a2e; margin-bottom: 24px; }
+
+    .form-group { margin-bottom: 18px; }
+
+    label { display: block; font-size: 13px; font-weight: 600; color: #444; margin-bottom: 6px; }
+
+    input, select {
+      width: 100%;
+      padding: 11px 14px;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+      background: white;
+    }
+    input:focus, select:focus { border-color: #4f46e5; }
+
+    .save-btn {
+      width: 100%;
+      padding: 13px;
+      background: #4f46e5;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: background 0.2s;
+    }
+    .save-btn:hover { background: #4338ca; }
+    .save-btn:disabled { background: #a5b4fc; cursor: not-allowed; }
+
+    .message {
+      margin-top: 16px;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      display: none;
+    }
+    .message.error { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+    .message.success { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+
+    .loading { text-align: center; padding: 40px; color: #888; }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="index.html" class="nav-logo">QR<span>Tifact</span></a>
+    <div class="nav-right" id="navRight"></div>
+  </nav>
+
+  <div class="container">
+    <a href="index.html" class="back-link">&#8592; Back to exhibits</a>
+    <div id="content"><div class="loading">Loading profile...</div></div>
+  </div>
+
+  <script>
+    const API = 'http://127.0.0.1:8000/api/v1';
+
+    function getToken() { return localStorage.getItem('access_token'); }
+    function getHeaders() {
+      return {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${getToken()}`
+      };
+    }
+
+    if (!getToken()) window.location.href = 'auth.html';
+
+    function renderNav() {
+      const email = localStorage.getItem('user_email') || '';
+      document.getElementById('navRight').innerHTML = `
+        <span class="nav-email">${email}</span>
+        <a href="profile.html" class="nav-link">Profile</a>
+        <button class="nav-btn outline" onclick="logout()">Logout</button>
+      `;
+    }
+
+    function logout() {
+      localStorage.clear();
+      window.location.href = 'auth.html';
+    }
+
+    let profileId = null;
+
+    async function loadProfile() {
+      try {
+        const res = await fetch(`${API}/profiles/me`, { headers: getHeaders() });
+        if (!res.ok) throw new Error('Failed');
+        const profile = await res.json();
+        profileId = profile.id;
+        renderProfile(profile);
+      } catch {
+        document.getElementById('content').innerHTML = '<div class="loading">Could not load profile.</div>';
+      }
+    }
+
+    function renderProfile(profile) {
+      const email = localStorage.getItem('user_email') || '';
+      document.getElementById('content').innerHTML = `
+        <div class="card">
+          <div class="avatar">${email[0]?.toUpperCase() || '?'}</div>
+          <div class="user-email">${email}</div>
+          <h2>Edit Profile</h2>
+          <div class="form-group">
+            <label>Full Name</label>
+            <input type="text" id="fullName" value="${profile.full_name || ''}" placeholder="Your full name" />
+          </div>
+          <div class="form-group">
+            <label>Phone</label>
+            <input type="tel" id="phone" value="${profile.phone || ''}" placeholder="+998 XX XXX XX XX" />
+          </div>
+          <div class="form-group">
+            <label>Preferred Language</label>
+            <select id="language">
+              <option value="uz" ${profile.preferred_language === 'uz' ? 'selected' : ''}>Uzbek (UZ)</option>
+              <option value="ru" ${profile.preferred_language === 'ru' ? 'selected' : ''}>Russian (RU)</option>
+              <option value="en" ${profile.preferred_language === 'en' ? 'selected' : ''}>English (EN)</option>
+            </select>
+          </div>
+          <button class="save-btn" id="saveBtn" onclick="saveProfile()">Save Changes</button>
+          <div class="message" id="message"></div>
+        </div>
+      `;
+    }
+
+    function showMessage(text, type) {
+      const el = document.getElementById('message');
+      el.textContent = text;
+      el.className = `message ${type}`;
+      el.style.display = 'block';
+    }
+
+    async function saveProfile() {
+      if (!profileId) return;
+      const btn = document.getElementById('saveBtn');
+      btn.disabled = true; btn.textContent = 'Saving...';
+
+      const data = {
+        full_name: document.getElementById('fullName').value || null,
+        phone: document.getElementById('phone').value || null,
+        preferred_language: document.getElementById('language').value,
+      };
+
+      try {
+        const res = await fetch(`${API}/profiles/${profileId}`, {
+          method: 'PATCH',
+          headers: getHeaders(),
+          body: JSON.stringify(data),
+        });
+        if (!res.ok) throw new Error('Failed');
+        showMessage('Profile updated successfully!', 'success');
+      } catch {
+        showMessage('Failed to save profile.', 'error');
+      } finally {
+        btn.disabled = false; btn.textContent = 'Save Changes';
+      }
+    }
+
+    renderNav();
+    loadProfile();
+  </script>
+</body>
+</html>

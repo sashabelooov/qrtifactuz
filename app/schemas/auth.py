@@ -23,6 +23,11 @@ class RefreshRequest(BaseModel):
     refresh_token: str
 
 
+class VerifyEmailRequest(BaseModel):
+    email: EmailStr
+    otp: str
+
+
 class UserResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

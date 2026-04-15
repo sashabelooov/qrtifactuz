@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>QRTifact — Login</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f0f2f5;
+      min-height: 100vh;
+    }
+
+    nav {
+      background: #1a1a2e;
+      padding: 0 32px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+    }
+
+    .nav-logo { color: white; font-size: 20px; font-weight: 700; text-decoration: none; }
+    .nav-logo span { color: #818cf8; }
+
+    .main {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: calc(100vh - 60px);
+      padding: 24px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 40px;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    }
+
+    h1 { text-align: center; font-size: 22px; color: #1a1a2e; margin-bottom: 8px; }
+    .subtitle { text-align: center; color: #888; font-size: 13px; margin-bottom: 28px; }
+
+    .btn-group { display: flex; gap: 12px; margin-bottom: 28px; }
+
+    .tab-btn {
+      flex: 1;
+      padding: 12px;
+      border: 2px solid #e0e0e0;
+      background: white;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      color: #555;
+    }
+
+    .tab-btn:hover { border-color: #4f46e5; color: #4f46e5; }
+    .tab-btn.active { background: #4f46e5; border-color: #4f46e5; color: white; }
+
+    .form-group { margin-bottom: 16px; }
+
+    label { display: block; font-size: 13px; font-weight: 600; color: #444; margin-bottom: 6px; }
+
+    input {
+      width: 100%;
+      padding: 11px 14px;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input:focus { border-color: #4f46e5; }
+
+    .submit-btn {
+      width: 100%;
+      padding: 13px;
+      background: #4f46e5;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: background 0.2s;
+    }
+
+    .submit-btn:hover { background: #4338ca; }
+    .submit-btn:disabled { background: #a5b4fc; cursor: not-allowed; }
+
+    .message {
+      margin-top: 16px;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      display: none;
+    }
+
+    .message.error { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+    .message.success { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="index.html" class="nav-logo">QR<span>Tifact</span></a>
+  </nav>
+
+  <div class="main">
+    <div class="card">
+      <h1>Welcome</h1>
+      <p class="subtitle">Sign in or create an account</p>
+
+      <div class="btn-group">
+        <button class="tab-btn active" id="btnRegister" onclick="switchTab('register')">Register</button>
+        <button class="tab-btn" id="btnLogin" onclick="switchTab('login')">Login</button>
+      </div>
+
+      <form id="registerForm" onsubmit="handleRegister(event)">
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="regEmail" placeholder="you@example.com" required />
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="regPassword" placeholder="Min 6 characters" required />
+        </div>
+        <div class="form-group">
+          <label>Confirm Password</label>
+          <input type="password" id="regConfirm" placeholder="Repeat password" required />
+        </div>
+        <button class="submit-btn" type="submit" id="regBtn">Create Account</button>
+      </form>
+
+      <form id="loginForm" class="hidden" onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="loginEmail" placeholder="you@example.com" required />
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="loginPassword" placeholder="Your password" required />
+        </div>
+        <button class="submit-btn" type="submit" id="loginBtn">Sign In</button>
+      </form>
+
+      <div class="message" id="message"></div>
+    </div>
+  </div>
+
+  <script>
+    const API = 'http://127.0.0.1:8000/api/v1';
+
+    if (localStorage.getItem('access_token')) window.location.href = 'index.html';
+
+    function switchTab(tab) {
+      const isRegister = tab === 'register';
+      document.getElementById('registerForm').classList.toggle('hidden', !isRegister);
+      document.getElementById('loginForm').classList.toggle('hidden', isRegister);
+      document.getElementById('btnRegister').classList.toggle('active', isRegister);
+      document.getElementById('btnLogin').classList.toggle('active', !isRegister);
+      document.getElementById('message').style.display = 'none';
+    }
+
+    function showMessage(text, type) {
+      const el = document.getElementById('message');
+      el.textContent = text;
+      el.className = `message ${type}`;
+      el.style.display = 'block';
+    }
+
+    async function fetchMe(token) {
+      try {
+        const res = await fetch(`${API}/auth/me`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        return await res.json();
+      } catch { return null; }
+    }
+
+    function saveSession(tokenData, email, me) {
+      localStorage.setItem('access_token', tokenData.access_token);
+      localStorage.setItem('refresh_token', tokenData.refresh_token);
+      localStorage.setItem('user_email', email);
+      if (me?.id) localStorage.setItem('user_id', me.id);
+    }
+
+    async function handleRegister(e) {
+      e.preventDefault();
+      const email = document.getElementById('regEmail').value;
+      const password = document.getElementById('regPassword').value;
+      const confirm = document.getElementById('regConfirm').value;
+
+      if (password !== confirm) { showMessage('Passwords do not match', 'error'); return; }
+
+      const btn = document.getElementById('regBtn');
+      btn.disabled = true; btn.textContent = 'Creating account...';
+
+      try {
+        const res = await fetch(`${API}/auth/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password }),
+        });
+        const data = await res.json();
+        if (!res.ok) { showMessage(data.detail || 'Registration failed', 'error'); return; }
+        const me = await fetchMe(data.access_token);
+        saveSession(data, email, me);
+        window.location.href = 'index.html';
+      } catch {
+        showMessage('Cannot reach the server. Is it running?', 'error');
+      } finally {
+        btn.disabled = false; btn.textContent = 'Create Account';
+      }
+    }
+
+    async function handleLogin(e) {
+      e.preventDefault();
+      const email = document.getElementById('loginEmail').value;
+      const password = document.getElementById('loginPassword').value;
+
+      const btn = document.getElementById('loginBtn');
+      btn.disabled = true; btn.textContent = 'Signing in...';
+
+      try {
+        const res = await fetch(`${API}/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password }),
+        });
+        const data = await res.json();
+        if (!res.ok) { showMessage(data.detail || 'Login failed', 'error'); return; }
+        const me = await fetchMe(data.access_token);
+        saveSession(data, email, me);
+        window.location.href = 'index.html';
+      } catch {
+        showMessage('Cannot reach the server. Is it running?', 'error');
+      } finally {
+        btn.disabled = false; btn.textContent = 'Sign In';
+      }
+    }
+  </script>
+</body>
+</html>
