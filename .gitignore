@@ -243,3 +243,6 @@ build/
 # Environment
 .env
 .env.local
+
+
+frontend/
