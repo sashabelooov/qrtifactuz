@@ -43,6 +43,9 @@ class Exhibit(Base):
     media: Mapped[list["ExhibitMedia"]] = relationship("ExhibitMedia", back_populates="exhibit", lazy="selectin")
     audio_tracks: Mapped[list["ExhibitAudioTrack"]] = relationship("ExhibitAudioTrack", back_populates="exhibit", lazy="selectin")
 
+    def __repr__(self) -> str:
+        return self.slug
+
 
 class ExhibitTranslation(Base):
     __tablename__ = "exhibit_translations"
@@ -54,6 +57,9 @@ class ExhibitTranslation(Base):
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     exhibit: Mapped["Exhibit"] = relationship("Exhibit", back_populates="translations", lazy="noload")
+
+    def __repr__(self) -> str:
+        return f"[{self.language}] {self.title}"
 
 
 class ExhibitMedia(Base):
@@ -69,6 +75,9 @@ class ExhibitMedia(Base):
 
     exhibit: Mapped["Exhibit"] = relationship("Exhibit", back_populates="media", lazy="noload")
 
+    def __repr__(self) -> str:
+        return f"{self.media_type}: {self.public_url}"
+
 
 class ExhibitAudioTrack(Base):
     __tablename__ = "exhibit_audio_tracks"
@@ -83,4 +92,4 @@ class ExhibitAudioTrack(Base):
     exhibit: Mapped["Exhibit"] = relationship("Exhibit", back_populates="audio_tracks", lazy="noload")
 
     def __repr__(self) -> str:
-        return f"{self.language}: {self.title}"
+        return f"[{self.language}] {self.public_url}"

@@ -21,6 +21,8 @@ dependencies = [
     "aiosmtplib>=3.0.0",
     "email-validator>=2.1.0",
     "bcrypt>=4.0.0",
+    "sqladmin[full]>=0.20.0",
+    "itsdangerous>=2.2.0",
 ]
 
 [tool.hatch.build.targets.wheel]
