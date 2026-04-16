@@ -1,3 +1,4 @@
+import secrets
 import httpx
 from app.core.config import settings
 from sqlalchemy import select
@@ -6,23 +7,38 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.security import create_access_token, create_refresh_token
 from app.models.user import User
 from app.models.profile import Profile
+from app.services.otp import get_redis
 
 
 GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
 GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
 GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v2/userinfo"
+STATE_TTL = 600  # 10 minutes
 
 
-def get_google_auth_url() -> str:
+async def get_google_auth_url() -> str:
+    state = secrets.token_urlsafe(32)
+    r = await get_redis()
+    await r.set(f"oauth_state:{state}", "1", ex=STATE_TTL)
+    await r.aclose()
     params = {
         "client_id": settings.GOOGLE_CLIENT_ID,
         "redirect_uri": settings.GOOGLE_REDIRECT_URI,
         "response_type": "code",
         "scope": "openid email profile",
         "access_type": "offline",
+        "state": state,
     }
     query = "&".join(f"{k}={v}" for k, v in params.items())
     return f"{GOOGLE_AUTH_URL}?{query}"
+
+
+async def validate_oauth_state(state: str) -> bool:
+    r = await get_redis()
+    value = await r.get(f"oauth_state:{state}")
+    await r.delete(f"oauth_state:{state}")
+    await r.aclose()
+    return value is not None
 
 
 async def exchange_code_for_token(code: str) -> str:

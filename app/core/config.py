@@ -39,5 +39,10 @@ class Settings(BaseSettings):
     # Frontend
     FRONTEND_URL: str = "http://localhost:3000"
 
+    # Admin panel
+    ADMIN_USERNAME: str = "admin"
+    ADMIN_PASSWORD: str = "changeme"
+    ADMIN_SECRET_KEY: str = "admin-secret-change-in-production"
+
 
 settings = Settings()

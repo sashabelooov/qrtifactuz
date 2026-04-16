@@ -3,7 +3,8 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
-from app.services.google_auth import get_google_auth_url, exchange_code_for_token, get_google_user_info, google_login
+from app.services.google_auth import get_google_auth_url, exchange_code_for_token, get_google_user_info, google_login, validate_oauth_state
+from app.core.exceptions import UnauthorizedException
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.schemas.auth import LoginRequest, RefreshRequest, RegisterRequest, TokenResponse, UserResponse, VerifyEmailRequest
@@ -45,17 +46,22 @@ async def me(current_user=Depends(get_current_user)):
 
 @router.get("/google")
 async def google_auth():
-    return {"redirect_url": get_google_auth_url()}
+    return {"redirect_url": await get_google_auth_url()}
 
 
 @router.get("/google/callback")
-async def google_callback(code: str = Query(...), db: AsyncSession = Depends(get_db)):
+async def google_callback(
+    code: str = Query(...),
+    state: str = Query(...),
+    db: AsyncSession = Depends(get_db),
+):
+    if not await validate_oauth_state(state):
+        raise UnauthorizedException("Invalid or expired OAuth state")
+
     access_token = await exchange_code_for_token(code)
     user_info = await get_google_user_info(access_token)
     tokens = await google_login(db, user_info)
-    redirect_url = (
-        f"{settings.FRONTEND_URL}/auth.html"
-        f"?access_token={tokens['access_token']}"
-        f"&refresh_token={tokens['refresh_token']}"
-    )
-    return RedirectResponse(url=redirect_url)
+
+    # Use URL fragment (#) — never sent to servers, never logged by proxies
+    fragment = f"access_token={tokens['access_token']}&refresh_token={tokens['refresh_token']}"
+    return RedirectResponse(url=f"{settings.FRONTEND_URL}/auth.html#{fragment}")
