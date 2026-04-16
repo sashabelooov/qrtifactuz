@@ -1,5 +1,16 @@
 # QRTifact Backend — Claude Code Context
 
+## Context Mode (MANDATORY)
+Always use context-mode MCP tools instead of Bash/Read for large outputs:
+- `ctx_batch_execute` — explore codebase, run multiple commands, auto-index + search in one call
+- `ctx_search` — follow-up questions after indexing
+- `ctx_execute` — analyze logs, parse JSON, process data in sandbox
+- `ctx_fetch_and_index` — fetch URLs
+- Only use `Read` when you need file content in context to **edit** it
+- Never use Bash for commands producing >20 lines of output
+
+---
+
 ## What is this project?
 QRTifact is a production-ready FastAPI backend for a multilingual museum exhibit platform in Uzbekistan.
 Museums add exhibits with QR codes. Visitors scan QR codes and see exhibit details (text + audio) in Uzbek, Russian, or English. Visitors buy scan credit packages to unlock exhibits.

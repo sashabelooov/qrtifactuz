@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, Query
+from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
-
+from app.core.config import settings
 from app.services.google_auth import get_google_auth_url, exchange_code_for_token, get_google_user_info, google_login
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
@@ -47,8 +48,14 @@ async def google_auth():
     return {"redirect_url": get_google_auth_url()}
 
 
-@router.get("/google/callback", response_model=TokenResponse)
+@router.get("/google/callback")
 async def google_callback(code: str = Query(...), db: AsyncSession = Depends(get_db)):
     access_token = await exchange_code_for_token(code)
     user_info = await get_google_user_info(access_token)
-    return await google_login(db, user_info)
+    tokens = await google_login(db, user_info)
+    redirect_url = (
+        f"{settings.FRONTEND_URL}/auth.html"
+        f"?access_token={tokens['access_token']}"
+        f"&refresh_token={tokens['refresh_token']}"
+    )
+    return RedirectResponse(url=redirect_url)
