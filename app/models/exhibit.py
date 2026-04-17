@@ -39,6 +39,8 @@ class Exhibit(Base):
     created_at: Mapped[str] = mapped_column(server_default=func.now())
     updated_at: Mapped[str] = mapped_column(server_default=func.now(), onupdate=func.now())
 
+    museum: Mapped["Museum"] = relationship("Museum", back_populates="exhibits", lazy="noload")
+    hall: Mapped["Hall | None"] = relationship("Hall", back_populates="exhibits", lazy="noload")
     translations: Mapped[list["ExhibitTranslation"]] = relationship("ExhibitTranslation", back_populates="exhibit", lazy="selectin")
     media: Mapped[list["ExhibitMedia"]] = relationship("ExhibitMedia", back_populates="exhibit", lazy="selectin")
     audio_tracks: Mapped[list["ExhibitAudioTrack"]] = relationship("ExhibitAudioTrack", back_populates="exhibit", lazy="selectin")

@@ -109,6 +109,7 @@ class CountryAdmin(ModelView, model=Country):
     column_list = [Country.id, Country.name, Country.code, Country.created_at]
     column_searchable_list = [Country.name]
     column_labels = {"created_at": "Created"}
+    form_excluded_columns = ["created_at", "cities"]
     can_delete = True
 
 
@@ -119,6 +120,7 @@ class CityAdmin(ModelView, model=City):
     column_list = [City.id, City.name, City.country_id, City.created_at]
     column_searchable_list = [City.name]
     column_labels = {"country_id": "Country", "created_at": "Created"}
+    form_excluded_columns = ["created_at", "museums"]
     can_delete = True
 
 
@@ -129,6 +131,7 @@ class MuseumAdmin(ModelView, model=Museum):
     column_list = [Museum.id, Museum.name, Museum.slug, Museum.city_id, Museum.is_active]
     column_searchable_list = [Museum.name, Museum.slug]
     column_labels = {"city_id": "City", "is_active": "Active"}
+    form_excluded_columns = ["created_at", "updated_at", "halls"]
     can_delete = True
 
 
@@ -138,6 +141,7 @@ class HallAdmin(ModelView, model=Hall):
     icon = "fa-solid fa-door-open"
     column_list = [Hall.id, Hall.name, Hall.museum_id, Hall.floor]
     column_labels = {"museum_id": "Museum"}
+    form_excluded_columns = ["created_at", "updated_at"]
     can_delete = True
 
 
@@ -148,10 +152,11 @@ class ExhibitAdmin(ModelView, model=Exhibit):
     column_list = [Exhibit.id, Exhibit.slug, Exhibit.status, Exhibit.views_count, Exhibit.listens_count]
     column_searchable_list = [Exhibit.slug]
     column_labels = {
-        "museum_id": "Museum", "hall_id": "Hall", "created_by": "Created By",
+        "museum": "Museum", "hall": "Hall", "created_by": "Created By",
         "qr_code_url": "QR Code URL", "views_count": "Views", "listens_count": "Listens",
         "created_at": "Created", "updated_at": "Updated",
     }
+    form_columns = ["museum", "hall", "slug", "qr_code_url", "status"]
     can_delete = True
 
 
@@ -161,6 +166,7 @@ class ExhibitTranslationAdmin(ModelView, model=ExhibitTranslation):
     icon = "fa-solid fa-language"
     column_list = [ExhibitTranslation.id, ExhibitTranslation.exhibit_id, ExhibitTranslation.language, ExhibitTranslation.title]
     column_labels = {"exhibit_id": "Exhibit", "language": "Language", "title": "Title", "description": "Description"}
+    form_excluded_columns = ["exhibit"]
     can_delete = True
 
 
@@ -219,18 +225,15 @@ class ExhibitMediaAdmin(ModelView, model=ExhibitMedia):
 
 
 
-admin.add_view(ExhibitTranslationAdmin)
-admin.add_view(ExhibitAudioTrackAdmin)
-admin.add_view(ExhibitMediaAdmin)
-
-
-
-admin.add_view(ExhibitAdmin)
-admin.add_view(UserAdmin)
 admin.add_view(CountryAdmin)
 admin.add_view(CityAdmin)
 admin.add_view(MuseumAdmin)
 admin.add_view(HallAdmin)
+admin.add_view(ExhibitAdmin)
+admin.add_view(ExhibitTranslationAdmin)
+admin.add_view(ExhibitMediaAdmin)
+admin.add_view(ExhibitAudioTrackAdmin)
+admin.add_view(UserAdmin)
 
 
 
