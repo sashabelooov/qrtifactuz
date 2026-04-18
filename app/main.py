@@ -79,24 +79,35 @@ class AdminAuth(AuthenticationBackend):
 admin = Admin(app, engine, authentication_backend=AdminAuth(secret_key=settings.ADMIN_SECRET_KEY))
 
 
-def _upload_to_s3(content: bytes, filename: str, folder: str) -> tuple[str, str]:
-    s3 = boto3.client(
-        "s3",
-        aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-        aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
-        region_name=settings.AWS_S3_REGION,
-    )
-    key = f"{folder}/{uuid.uuid4()}/{filename}"
-    s3.put_object(Bucket=settings.AWS_S3_BUCKET, Key=key, Body=content)
-    public_url = f"https://{settings.AWS_S3_BUCKET}.s3.{settings.AWS_S3_REGION}.amazonaws.com/{key}"
-    return key, public_url
+def _upload_file(content: bytes, filename: str, folder: str) -> tuple[str, str]:
+    if settings.AWS_ACCESS_KEY_ID and settings.AWS_SECRET_ACCESS_KEY:
+        s3 = boto3.client(
+            "s3",
+            aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+            region_name=settings.AWS_S3_REGION,
+        )
+        key = f"{folder}/{uuid.uuid4()}/{filename}"
+        s3.put_object(Bucket=settings.AWS_S3_BUCKET, Key=key, Body=content)
+        public_url = f"https://{settings.AWS_S3_BUCKET}.s3.{settings.AWS_S3_REGION}.amazonaws.com/{key}"
+        return key, public_url
+    else:
+        import os
+        local_dir = f"static/uploads/{folder}"
+        os.makedirs(local_dir, exist_ok=True)
+        unique_name = f"{uuid.uuid4()}_{filename}"
+        local_path = f"{local_dir}/{unique_name}"
+        with open(local_path, "wb") as f:
+            f.write(content)
+        public_url = f"{settings.BACKEND_URL}/static/uploads/{folder}/{unique_name}"
+        return local_path, public_url
 
 
 class UserAdmin(ModelView, model=User):
     name = "User"
     name_plural = "Users"
     icon = "fa-solid fa-users"
-    column_list = [User.id, User.email, User.is_active, User.is_admin, User.created_at]
+    column_list = [User.email, User.is_active, User.is_admin, User.created_at, User.id]
     column_searchable_list = [User.email]
     column_labels = {"is_active": "Active", "is_admin": "Admin", "created_at": "Created"}
     can_delete = True
@@ -106,9 +117,10 @@ class CountryAdmin(ModelView, model=Country):
     name = "Country"
     name_plural = "Countries"
     icon = "fa-solid fa-earth-asia"
-    column_list = [Country.id, Country.name, Country.code, Country.created_at]
+    column_list = [Country.name, Country.code, Country.created_at, Country.id]
     column_searchable_list = [Country.name]
     column_labels = {"created_at": "Created"}
+    form_excluded_columns = ["created_at", "cities"]
     can_delete = True
 
 
@@ -116,9 +128,10 @@ class CityAdmin(ModelView, model=City):
     name = "City"
     name_plural = "Cities"
     icon = "fa-solid fa-city"
-    column_list = [City.id, City.name, City.country_id, City.created_at]
+    column_list = [City.name, City.country_id, City.created_at, City.id]
     column_searchable_list = [City.name]
     column_labels = {"country_id": "Country", "created_at": "Created"}
+    form_excluded_columns = ["created_at", "museums"]
     can_delete = True
 
 
@@ -126,9 +139,10 @@ class MuseumAdmin(ModelView, model=Museum):
     name = "Museum"
     name_plural = "Museums"
     icon = "fa-solid fa-landmark"
-    column_list = [Museum.id, Museum.name, Museum.slug, Museum.city_id, Museum.is_active]
+    column_list = [Museum.name, Museum.slug, Museum.city_id, Museum.is_active, Museum.id]
     column_searchable_list = [Museum.name, Museum.slug]
     column_labels = {"city_id": "City", "is_active": "Active"}
+    form_excluded_columns = ["created_at", "updated_at", "halls"]
     can_delete = True
 
 
@@ -136,8 +150,9 @@ class HallAdmin(ModelView, model=Hall):
     name = "Hall"
     name_plural = "Halls"
     icon = "fa-solid fa-door-open"
-    column_list = [Hall.id, Hall.name, Hall.museum_id, Hall.floor]
+    column_list = [Hall.name, Hall.museum_id, Hall.floor, Hall.id]
     column_labels = {"museum_id": "Museum"}
+    form_excluded_columns = ["created_at", "updated_at"]
     can_delete = True
 
 
@@ -145,13 +160,14 @@ class ExhibitAdmin(ModelView, model=Exhibit):
     name = "Exhibit"
     name_plural = "Exhibits"
     icon = "fa-solid fa-image"
-    column_list = [Exhibit.id, Exhibit.slug, Exhibit.status, Exhibit.views_count, Exhibit.listens_count]
+    column_list = [Exhibit.slug, Exhibit.status, Exhibit.views_count, Exhibit.listens_count, Exhibit.id]
     column_searchable_list = [Exhibit.slug]
     column_labels = {
-        "museum_id": "Museum", "hall_id": "Hall", "created_by": "Created By",
+        "museum": "Museum", "hall": "Hall", "created_by": "Created By",
         "qr_code_url": "QR Code URL", "views_count": "Views", "listens_count": "Listens",
         "created_at": "Created", "updated_at": "Updated",
     }
+    form_columns = ["museum", "hall", "slug", "qr_code_url", "status"]
     can_delete = True
 
 
@@ -159,8 +175,9 @@ class ExhibitTranslationAdmin(ModelView, model=ExhibitTranslation):
     name = "Translation"
     name_plural = "Translations"
     icon = "fa-solid fa-language"
-    column_list = [ExhibitTranslation.id, ExhibitTranslation.exhibit_id, ExhibitTranslation.language, ExhibitTranslation.title]
-    column_labels = {"exhibit_id": "Exhibit", "language": "Language", "title": "Title", "description": "Description"}
+    column_list = [ExhibitTranslation.exhibit, ExhibitTranslation.language, ExhibitTranslation.title, ExhibitTranslation.id]
+    column_labels = {"exhibit": "Exhibit", "language": "Language", "title": "Title", "description": "Description"}
+    form_columns = ["exhibit", "language", "title", "description"]
     can_delete = True
 
 
@@ -168,13 +185,13 @@ class ExhibitAudioTrackAdmin(ModelView, model=ExhibitAudioTrack):
     name = "Audio Track"
     name_plural = "Audio Tracks"
     icon = "fa-solid fa-headphones"
-    column_list = [ExhibitAudioTrack.id, ExhibitAudioTrack.exhibit_id, ExhibitAudioTrack.language, ExhibitAudioTrack.public_url, ExhibitAudioTrack.duration_seconds]
+    column_list = [ExhibitAudioTrack.exhibit, ExhibitAudioTrack.language, ExhibitAudioTrack.public_url, ExhibitAudioTrack.duration_seconds, ExhibitAudioTrack.id]
     column_labels = {
-        "exhibit_id": "Exhibit", "language": "Language",
+        "exhibit": "Exhibit", "language": "Language",
         "storage_path": "File", "public_url": "Public URL", "duration_seconds": "Duration (sec)",
     }
     form_overrides = {"storage_path": FileField}
-    form_columns = ["exhibit_id", "language", "storage_path", "duration_seconds"]
+    form_columns = ["exhibit", "language", "storage_path", "duration_seconds"]
     can_delete = True
 
     async def on_model_change(self, data, model, is_created, request):
@@ -182,7 +199,7 @@ class ExhibitAudioTrackAdmin(ModelView, model=ExhibitAudioTrack):
         if file and hasattr(file, "filename") and file.filename:
             content = await file.read()
             key, url = await asyncio.get_event_loop().run_in_executor(
-                None, _upload_to_s3, content, file.filename, "audio"
+                None, _upload_file, content, file.filename, "audio"
             )
             data["storage_path"] = key
             data["public_url"] = url
@@ -195,13 +212,13 @@ class ExhibitMediaAdmin(ModelView, model=ExhibitMedia):
     name = "Exhibit Media"
     name_plural = "Exhibit Media"
     icon = "fa-solid fa-photo-film"
-    column_list = [ExhibitMedia.id, ExhibitMedia.exhibit_id, ExhibitMedia.public_url, ExhibitMedia.media_type, ExhibitMedia.is_cover]
+    column_list = [ExhibitMedia.exhibit, ExhibitMedia.public_url, ExhibitMedia.media_type, ExhibitMedia.is_cover, ExhibitMedia.id]
     column_labels = {
-        "exhibit_id": "Exhibit", "storage_path": "File", "public_url": "Public URL",
+        "exhibit": "Exhibit", "storage_path": "File", "public_url": "Public URL",
         "media_type": "Type", "is_cover": "Cover", "sort_order": "Order",
     }
     form_overrides = {"storage_path": FileField}
-    form_columns = ["exhibit_id", "storage_path", "media_type", "is_cover", "sort_order"]
+    form_columns = ["exhibit", "storage_path", "media_type", "is_cover", "sort_order"]
     can_delete = True
 
     async def on_model_change(self, data, model, is_created, request):
@@ -209,7 +226,7 @@ class ExhibitMediaAdmin(ModelView, model=ExhibitMedia):
         if file and hasattr(file, "filename") and file.filename:
             content = await file.read()
             key, url = await asyncio.get_event_loop().run_in_executor(
-                None, _upload_to_s3, content, file.filename, "media"
+                None, _upload_file, content, file.filename, "media"
             )
             data["storage_path"] = key
             data["public_url"] = url
@@ -219,18 +236,15 @@ class ExhibitMediaAdmin(ModelView, model=ExhibitMedia):
 
 
 
-admin.add_view(ExhibitTranslationAdmin)
-admin.add_view(ExhibitAudioTrackAdmin)
-admin.add_view(ExhibitMediaAdmin)
-
-
-
-admin.add_view(ExhibitAdmin)
-admin.add_view(UserAdmin)
 admin.add_view(CountryAdmin)
 admin.add_view(CityAdmin)
 admin.add_view(MuseumAdmin)
 admin.add_view(HallAdmin)
+admin.add_view(ExhibitAdmin)
+admin.add_view(ExhibitTranslationAdmin)
+admin.add_view(ExhibitMediaAdmin)
+admin.add_view(ExhibitAudioTrackAdmin)
+admin.add_view(UserAdmin)
 
 
 

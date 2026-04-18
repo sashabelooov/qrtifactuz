@@ -38,6 +38,7 @@ class Settings(BaseSettings):
 
     # Frontend
     FRONTEND_URL: str = "http://localhost:3000"
+    BACKEND_URL: str = "http://localhost:8000"
 
     # Admin panel
     ADMIN_USERNAME: str = "admin"
