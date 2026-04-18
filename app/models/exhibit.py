@@ -58,7 +58,7 @@ class ExhibitTranslation(Base):
     title: Mapped[str] = mapped_column(String(500), nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
 
-    exhibit: Mapped["Exhibit"] = relationship("Exhibit", back_populates="translations", lazy="noload")
+    exhibit: Mapped["Exhibit"] = relationship("Exhibit", back_populates="translations", lazy="selectin")
 
     def __repr__(self) -> str:
         return f"[{self.language}] {self.title}"
@@ -75,7 +75,7 @@ class ExhibitMedia(Base):
     is_cover: Mapped[bool] = mapped_column(Boolean, default=False)
     sort_order: Mapped[int] = mapped_column(Integer, default=0)
 
-    exhibit: Mapped["Exhibit"] = relationship("Exhibit", back_populates="media", lazy="noload")
+    exhibit: Mapped["Exhibit"] = relationship("Exhibit", back_populates="media", lazy="selectin")
 
     def __repr__(self) -> str:
         return f"{self.media_type}: {self.public_url}"
@@ -91,7 +91,7 @@ class ExhibitAudioTrack(Base):
     public_url: Mapped[str] = mapped_column(String(500), nullable=False)
     duration_seconds: Mapped[float | None] = mapped_column(Float, nullable=True)
 
-    exhibit: Mapped["Exhibit"] = relationship("Exhibit", back_populates="audio_tracks", lazy="noload")
+    exhibit: Mapped["Exhibit"] = relationship("Exhibit", back_populates="audio_tracks", lazy="selectin")
 
     def __repr__(self) -> str:
         return f"[{self.language}] {self.public_url}"

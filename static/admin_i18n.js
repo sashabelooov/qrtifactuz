@@ -253,9 +253,30 @@
     document.body.appendChild(wrapper);
   }
 
+  // ── Slug auto-fill ────────────────────────────────────────────────
+  function toSlug(text) {
+    return text.toLowerCase()
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z0-9-]/g, '')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
+  }
+
+  function initSlugAutofill() {
+    const nameInput = document.querySelector('input[name="name"]');
+    const slugInput = document.querySelector('input[name="slug"]');
+    if (!nameInput || !slugInput) return;
+    let userEditedSlug = slugInput.value.length > 0;
+    slugInput.addEventListener('input', () => { userEditedSlug = true; });
+    nameInput.addEventListener('input', () => {
+      if (!userEditedSlug) slugInput.value = toSlug(nameInput.value);
+    });
+  }
+
   // ── Boot ──────────────────────────────────────────────────────────
   document.addEventListener('DOMContentLoaded', function () {
     injectDropdown();
     translatePage();
+    initSlugAutofill();
   });
 })();
