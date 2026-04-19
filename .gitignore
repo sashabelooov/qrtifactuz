@@ -249,3 +249,7 @@ frontend/
 
 # User uploaded files
 static/uploads/
+
+# Server connection info
+SERVER.md
+*.pem
