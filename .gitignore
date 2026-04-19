@@ -246,3 +246,6 @@ build/
 
 
 frontend/
+
+# User uploaded files
+static/uploads/

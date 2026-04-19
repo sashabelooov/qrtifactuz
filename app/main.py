@@ -250,7 +250,7 @@ admin.add_view(UserAdmin)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[settings.FRONTEND_URL, settings.BACKEND_URL],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -262,3 +262,8 @@ app.include_router(auth_router, prefix="/api/v1")
 app.include_router(profiles_router, prefix="/api/v1")
 app.include_router(museums_router, prefix="/api/v1")
 app.include_router(exhibits_router, prefix="/api/v1")
+
+
+@app.get("/health", tags=["Health"])
+async def health():
+    return {"status": "ok"}
