@@ -30,6 +30,17 @@ from app.models.exhibit import Exhibit, ExhibitTranslation, ExhibitMedia, Exhibi
 app = FastAPI(
     title="QRTifact API",
     version="1.0.0",
+    description=(
+        "Backend API for QRTifact — a multilingual museum exhibit platform for Uzbekistan.\n\n"
+        "Visitors scan QR codes to explore exhibits in **Uzbek**, **Russian**, or **English**.\n\n"
+        "## Authentication\n"
+        "Most endpoints require a Bearer token. Get one via `POST /api/v1/auth/login` or Google OAuth.\n"
+        "Pass it as: `Authorization: Bearer <access_token>`\n\n"
+        "## Admin endpoints\n"
+        "Endpoints under `/admin/` require an admin account (`is_admin = true`).\n\n"
+        "## Languages\n"
+        "Supported language codes: `uz` (Uzbek), `ru` (Russian), `en` (English)."
+    ),
     debug=settings.DEBUG,
 )
 

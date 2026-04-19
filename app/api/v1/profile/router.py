@@ -13,9 +13,25 @@ from app.services import profile as profile_service
 router = APIRouter(prefix="/profiles", tags=["Profiles"])
 
 
+@router.get(
+    "/me",
+    response_model=ProfileResponse,
+    summary="Get my profile",
+    description="Returns the profile of the currently authenticated user including full name, avatar, and preferred language.",
+)
+async def get_my_profile(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    return await profile_service.get_profile(db, current_user.profile.id, current_user)
 
 
-@router.get("/{profile_id}", response_model=ProfileResponse)
+@router.get(
+    "/{profile_id}",
+    response_model=ProfileResponse,
+    summary="Get profile by ID",
+    description="Returns a user profile by its ID. Requires authentication. Users can only access their own profile.",
+)
 async def get_profile_route(
     profile_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
@@ -24,7 +40,12 @@ async def get_profile_route(
     return await get_profile(db, profile_id, current_user)
 
 
-@router.patch("/{profile_id}", response_model=ProfileResponse)
+@router.patch(
+    "/{profile_id}",
+    response_model=ProfileResponse,
+    summary="Update profile",
+    description="Updates profile fields such as full name, avatar URL, or preferred language (uz, ru, en). Only the authenticated user can update their own profile.",
+)
 async def update_profile_route(
     profile_id: uuid.UUID,
     body: ProfileUpdate,
@@ -32,12 +53,3 @@ async def update_profile_route(
     current_user=Depends(get_current_user),
 ):
     return await update_profile(db, profile_id, body.model_dump(exclude_unset=True), current_user)
-
-
-
-@router.get("/me", response_model=ProfileResponse)
-async def get_my_profile(
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-):
-    return await profile_service.get_profile(db, current_user.profile.id, current_user)
