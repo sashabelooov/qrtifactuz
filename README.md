@@ -4,6 +4,12 @@
 
 > Multilingual museum exhibit platform for Uzbekistan — visitors scan QR codes to explore exhibits in Uzbek, Russian, or English.
 
+![CI](https://github.com/sashabelooov/qrtifactuz/actions/workflows/ci.yml/badge.svg)
+![CD](https://github.com/sashabelooov/qrtifactuz/actions/workflows/cd.yml/badge.svg)
+![Python](https://img.shields.io/badge/python-3.12-blue)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-green)
+![License](https://img.shields.io/badge/license-MIT-blue)
+
 ---
 
 ## About
@@ -12,6 +18,7 @@ QRTifact is a production-ready backend platform that connects museum visitors wi
 
 ---
 
+## Features
 
 - **Scan QR codes** — visit any exhibit and scan its QR code to instantly open the exhibit page
 - **Choose your language** — read and listen to exhibit content in Uzbek, Russian, or English
