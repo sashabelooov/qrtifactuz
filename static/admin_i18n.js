@@ -301,9 +301,89 @@
 
         /* Pagination on mobile */
         .pagination { flex-wrap: wrap; gap: 4px; }
+
+        /* Left drawer sidebar */
+        .navbar-collapse {
+          position: fixed !important;
+          top: 0 !important;
+          left: -280px !important;
+          width: 280px !important;
+          height: 100vh !important;
+          background: #1e293b !important;
+          z-index: 99990 !important;
+          overflow-y: auto !important;
+          transition: left 0.3s ease !important;
+          padding: 20px 0 !important;
+          flex-direction: column !important;
+          align-items: flex-start !important;
+        }
+        .navbar-collapse.show {
+          left: 0 !important;
+        }
+        .navbar-collapse .navbar-nav {
+          width: 100% !important;
+          flex-direction: column !important;
+          padding: 0 12px !important;
+        }
+        .navbar-collapse .nav-link {
+          color: #cbd5e1 !important;
+          padding: 12px 16px !important;
+          border-radius: 8px !important;
+          display: flex !important;
+          align-items: center !important;
+          gap: 10px !important;
+          font-size: 15px !important;
+        }
+        .navbar-collapse .nav-link:hover {
+          background: rgba(255,255,255,0.1) !important;
+          color: #fff !important;
+        }
+
+        /* Backdrop */
+        #mobileBackdrop {
+          display: none;
+          position: fixed;
+          inset: 0;
+          background: rgba(0,0,0,0.5);
+          z-index: 99980;
+        }
+        #mobileBackdrop.show { display: block; }
       }
     `;
     document.head.appendChild(style);
+  }
+
+  // ── Mobile left drawer toggle ─────────────────────────────────────
+  function initMobileDrawer() {
+    if (window.innerWidth > 768) return;
+
+    const backdrop = document.createElement('div');
+    backdrop.id = 'mobileBackdrop';
+    document.body.appendChild(backdrop);
+
+    function openDrawer() {
+      const nav = document.querySelector('.navbar-collapse');
+      if (nav) nav.classList.add('show');
+      backdrop.classList.add('show');
+    }
+    function closeDrawer() {
+      const nav = document.querySelector('.navbar-collapse');
+      if (nav) nav.classList.remove('show');
+      backdrop.classList.remove('show');
+    }
+
+    // Intercept existing hamburger toggle
+    document.addEventListener('click', (e) => {
+      const toggler = e.target.closest('[data-bs-toggle="collapse"], .navbar-toggler');
+      if (toggler) {
+        e.preventDefault();
+        e.stopPropagation();
+        const nav = document.querySelector('.navbar-collapse');
+        nav && nav.classList.contains('show') ? closeDrawer() : openDrawer();
+      }
+    }, true);
+
+    backdrop.addEventListener('click', closeDrawer);
   }
 
   // ── Boot ──────────────────────────────────────────────────────────
@@ -312,5 +392,6 @@
     injectDropdown();
     translatePage();
     initSlugAutofill();
+    initMobileDrawer();
   });
 })();
