@@ -83,6 +83,8 @@ async def create_museum(db: AsyncSession, data: MuseumCreate) -> Museum:
     db.add(museum)
     await db.commit()
     await db.refresh(museum)
+    from app.tasks.qr_tasks import generate_museum_qr
+    generate_museum_qr.delay(str(museum.id), museum.slug)
     return museum
 
 

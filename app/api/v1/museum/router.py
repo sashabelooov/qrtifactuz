@@ -10,7 +10,6 @@ from app.schemas.museum import (
     HallCreate, HallResponse,
 )
 from app.services import museum as museum_service
-
 router = APIRouter()
 
 
@@ -138,6 +137,8 @@ async def create_museum(
     _: object = Depends(get_current_admin),
 ):
     return await museum_service.create_museum(db, data)
+
+
 
 
 @router.put(
