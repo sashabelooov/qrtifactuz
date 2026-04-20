@@ -2,6 +2,7 @@ import uuid
 import asyncio
 import boto3
 from fastapi import FastAPI
+from fastapi.openapi.utils import get_openapi
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -42,6 +43,10 @@ app = FastAPI(
         "Supported language codes: `uz` (Uzbek), `ru` (Russian), `en` (English)."
     ),
     debug=settings.DEBUG,
+    docs_url="/docs" if settings.DEBUG else None,
+    redoc_url="/redoc" if settings.DEBUG else None,
+    swagger_ui_oauth2_redirect_url="/docs/oauth2-redirect",
+    openapi_tags=[],
 )
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -283,3 +288,28 @@ app.include_router(exhibits_router, prefix="/api/v1")
 @app.get("/health", tags=["Health"])
 async def health():
     return {"status": "ok"}
+
+
+def custom_openapi():
+    if app.openapi_schema:
+        return app.openapi_schema
+    schema = get_openapi(
+        title=app.title,
+        version=app.version,
+        description=app.description,
+        routes=app.routes,
+    )
+    schema["components"]["securitySchemes"] = {
+        "BearerAuth": {
+            "type": "http",
+            "scheme": "bearer",
+            "bearerFormat": "JWT",
+        }
+    }
+    for path in schema["paths"].values():
+        for operation in path.values():
+            operation["security"] = [{"BearerAuth": []}]
+    app.openapi_schema = schema
+    return schema
+
+app.openapi = custom_openapi
