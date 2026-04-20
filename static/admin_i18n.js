@@ -353,37 +353,123 @@
     document.head.appendChild(style);
   }
 
-  // ── Mobile left drawer toggle ─────────────────────────────────────
+  // ── Mobile left drawer ────────────────────────────────────────────
   function initMobileDrawer() {
     if (window.innerWidth > 768) return;
 
+    // Hide original navbar collapse entirely
+    const style = document.createElement('style');
+    style.textContent = `
+      @media (max-width: 768px) {
+        .navbar-collapse { display: none !important; }
+        .navbar-toggler { display: none !important; }
+        #mobileMenuBtn {
+          position: fixed;
+          top: 12px;
+          left: 12px;
+          z-index: 99999;
+          background: #1e293b;
+          border: none;
+          border-radius: 8px;
+          width: 42px;
+          height: 42px;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
+          gap: 5px;
+          cursor: pointer;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+        #mobileMenuBtn span {
+          display: block;
+          width: 22px;
+          height: 2px;
+          background: #fff;
+          border-radius: 2px;
+          transition: all 0.3s;
+        }
+        #mobileDrawer {
+          position: fixed;
+          top: 0;
+          left: -290px;
+          width: 270px;
+          height: 100vh;
+          background: #1e293b;
+          z-index: 99990;
+          overflow-y: auto;
+          transition: left 0.3s ease;
+          padding: 70px 12px 20px;
+        }
+        #mobileDrawer.open { left: 0; }
+        #mobileDrawer a {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 12px 16px;
+          color: #cbd5e1;
+          text-decoration: none;
+          border-radius: 8px;
+          font-size: 15px;
+          margin-bottom: 2px;
+        }
+        #mobileDrawer a:hover, #mobileDrawer a.active {
+          background: rgba(255,255,255,0.1);
+          color: #fff;
+        }
+        #mobileDrawer a svg, #mobileDrawer a i {
+          width: 20px;
+          flex-shrink: 0;
+        }
+        #mobileBackdrop {
+          display: none;
+          position: fixed;
+          inset: 0;
+          background: rgba(0,0,0,0.5);
+          z-index: 99980;
+        }
+        #mobileBackdrop.show { display: block; }
+      }
+    `;
+    document.head.appendChild(style);
+
+    // Build drawer with cloned nav links
+    const drawer = document.createElement('div');
+    drawer.id = 'mobileDrawer';
+
+    const navLinks = document.querySelectorAll('.navbar-collapse .nav-link, .navbar-collapse a');
+    const seen = new Set();
+    navLinks.forEach(link => {
+      const href = link.getAttribute('href');
+      const text = link.textContent.trim();
+      if (!text || seen.has(href)) return;
+      seen.add(href);
+      const a = document.createElement('a');
+      a.href = href || '#';
+      a.innerHTML = link.innerHTML;
+      if (window.location.pathname.startsWith(href)) a.classList.add('active');
+      drawer.appendChild(a);
+    });
+
+    // Backdrop
     const backdrop = document.createElement('div');
     backdrop.id = 'mobileBackdrop';
-    document.body.appendChild(backdrop);
 
-    function openDrawer() {
-      const nav = document.querySelector('.navbar-collapse');
-      if (nav) nav.classList.add('show');
-      backdrop.classList.add('show');
-    }
-    function closeDrawer() {
-      const nav = document.querySelector('.navbar-collapse');
-      if (nav) nav.classList.remove('show');
-      backdrop.classList.remove('show');
-    }
+    // Hamburger button
+    const btn = document.createElement('button');
+    btn.id = 'mobileMenuBtn';
+    btn.setAttribute('aria-label', 'Menu');
+    btn.innerHTML = '<span></span><span></span><span></span>';
 
-    // Intercept existing hamburger toggle
-    document.addEventListener('click', (e) => {
-      const toggler = e.target.closest('[data-bs-toggle="collapse"], .navbar-toggler');
-      if (toggler) {
-        e.preventDefault();
-        e.stopPropagation();
-        const nav = document.querySelector('.navbar-collapse');
-        nav && nav.classList.contains('show') ? closeDrawer() : openDrawer();
-      }
-    }, true);
+    function openDrawer() { drawer.classList.add('open'); backdrop.classList.add('show'); }
+    function closeDrawer() { drawer.classList.remove('open'); backdrop.classList.remove('show'); }
 
+    btn.addEventListener('click', () => drawer.classList.contains('open') ? closeDrawer() : openDrawer());
     backdrop.addEventListener('click', closeDrawer);
+
+    document.body.appendChild(drawer);
+    document.body.appendChild(backdrop);
+    document.body.appendChild(btn);
   }
 
   // ── Boot ──────────────────────────────────────────────────────────
