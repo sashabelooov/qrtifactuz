@@ -12,7 +12,6 @@ QRTifact is a production-ready backend platform that connects museum visitors wi
 
 ---
 
-## ![1776690245800](image/README/1776690245800.png)
 
 - **Scan QR codes** — visit any exhibit and scan its QR code to instantly open the exhibit page
 - **Choose your language** — read and listen to exhibit content in Uzbek, Russian, or English
