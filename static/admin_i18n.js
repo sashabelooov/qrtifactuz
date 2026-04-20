@@ -474,10 +474,13 @@
 
   // ── Boot ──────────────────────────────────────────────────────────
   document.addEventListener('DOMContentLoaded', function () {
+    const isLoginPage = window.location.pathname.includes('/login');
     injectMobileStyles();
-    injectDropdown();
+    if (!isLoginPage) {
+      injectDropdown();
+      initMobileDrawer();
+    }
     translatePage();
     initSlugAutofill();
-    initMobileDrawer();
   });
 })();
