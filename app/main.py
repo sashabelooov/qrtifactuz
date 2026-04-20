@@ -150,11 +150,16 @@ class MuseumAdmin(ModelView, model=Museum):
     name = "Museum"
     name_plural = "Museums"
     icon = "fa-solid fa-landmark"
-    column_list = [Museum.name, Museum.slug, Museum.city_id, Museum.is_active, Museum.id]
+    column_list = [Museum.name, Museum.slug, Museum.city_id, Museum.is_active, Museum.qr_code_url, Museum.id]
     column_searchable_list = [Museum.name, Museum.slug]
-    column_labels = {"city_id": "City", "is_active": "Active"}
+    column_labels = {"city_id": "City", "is_active": "Active", "qr_code_url": "QR Code URL"}
     form_excluded_columns = ["created_at", "updated_at", "halls"]
     can_delete = True
+
+    async def after_model_change(self, data, model, is_created, request):
+        if is_created:
+            from app.tasks.qr_tasks import generate_museum_qr
+            generate_museum_qr.delay(str(model.id), model.slug)
 
 
 class HallAdmin(ModelView, model=Hall):

@@ -23,6 +23,7 @@ dependencies = [
     "bcrypt>=4.0.0",
     "sqladmin[full]>=0.20.0",
     "itsdangerous>=2.2.0",
+    "psycopg2-binary>=2.9.11",
 ]
 
 [tool.hatch.build.targets.wheel]

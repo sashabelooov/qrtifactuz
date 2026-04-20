@@ -7,6 +7,7 @@ from app.models.user import User
 from app.models.exhibit import ExhibitStatus
 from app.schemas.exhibit import ExhibitCreate, ExhibitUpdate, ExhibitResponse, ExhibitStatusUpdate
 from app.services import exhibit as exhibit_service
+from app.tasks.qr_tasks import generate_exhibit_qr
 
 
 router = APIRouter()
@@ -110,7 +111,10 @@ async def update_exhibit_status(
     db: AsyncSession = Depends(get_db),
     _: User = Depends(get_current_admin),
 ):
-    return await exhibit_service.update_exhibit_status(db, exhibit_id, data)
+    exhibit = await exhibit_service.update_exhibit_status(db, exhibit_id, data)
+    if data.status == ExhibitStatus.published:
+        generate_exhibit_qr.delay(str(exhibit.id), exhibit.slug)
+    return exhibit
 
 
 @router.delete(

@@ -52,3 +52,22 @@ jobs:
           ADMIN_PASSWORD: admin
           ADMIN_SECRET_KEY: test-admin-secret-key
         run: uv run pytest --tb=short
+
+  merge:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/backend'
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Merge backend into main
+        run: |
+          git config user.email "ci@github.com"
+          git config user.name "GitHub Actions"
+          git checkout main
+          git merge origin/backend --no-edit
+          git push origin main
