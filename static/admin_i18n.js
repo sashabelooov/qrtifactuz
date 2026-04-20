@@ -273,8 +273,42 @@
     });
   }
 
+  // ── Mobile CSS fixes ─────────────────────────────────────────────
+  function injectMobileStyles() {
+    const style = document.createElement('style');
+    style.textContent = `
+      @media (max-width: 768px) {
+        /* Scrollable tables */
+        .table-responsive, .card-table { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        table { min-width: 500px; }
+
+        /* Full-width form fields */
+        .form-control, .form-select, .tom-select { font-size: 16px !important; }
+        .col-md-6, .col-md-4, .col-md-8 { width: 100% !important; max-width: 100% !important; }
+
+        /* Bigger tap targets for buttons */
+        .btn { min-height: 40px; padding: 8px 16px; }
+
+        /* Fix lang switcher position on mobile */
+        #adminLangSwitcher { top: 10px; right: 10px; }
+
+        /* Page header stacking */
+        .page-header { flex-direction: column; gap: 8px; }
+        .page-header .ms-auto { margin-left: 0 !important; }
+
+        /* Card padding */
+        .card-body { padding: 12px; }
+
+        /* Pagination on mobile */
+        .pagination { flex-wrap: wrap; gap: 4px; }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
   // ── Boot ──────────────────────────────────────────────────────────
   document.addEventListener('DOMContentLoaded', function () {
+    injectMobileStyles();
     injectDropdown();
     translatePage();
     initSlugAutofill();
