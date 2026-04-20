@@ -44,6 +44,17 @@ class Settings(BaseSettings):
     ADMIN_USERNAME: str = "admin"
     ADMIN_PASSWORD: str = "changeme"
     ADMIN_SECRET_KEY: str = "admin-secret-change-in-production"
+    ADMIN_CREDENTIALS: str = ""  # "user1:pass1,user2:pass2" for multiple admins
+
+    def get_admin_credentials(self) -> dict[str, str]:
+        """Returns {username: password} for all admins."""
+        creds = {self.ADMIN_USERNAME: self.ADMIN_PASSWORD}
+        if self.ADMIN_CREDENTIALS:
+            for pair in self.ADMIN_CREDENTIALS.split(","):
+                if ":" in pair:
+                    u, p = pair.strip().split(":", 1)
+                    creds[u] = p
+        return creds
 
 
 settings = Settings()
