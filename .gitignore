@@ -250,6 +250,9 @@ frontend/
 # User uploaded files
 static/uploads/
 
+# Local screenshots
+image/
+
 # Server connection info
 SERVER.md
 *.pem
