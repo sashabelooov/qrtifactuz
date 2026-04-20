@@ -79,8 +79,11 @@ app.add_middleware(AdminI18nMiddleware)
 class AdminAuth(AuthenticationBackend):
     async def login(self, request: Request) -> bool:
         form = await request.form()
-        if form.get("username") == settings.ADMIN_USERNAME and form.get("password") == settings.ADMIN_PASSWORD:
-            request.session.update({"admin": True})
+        creds = settings.get_admin_credentials()
+        username = form.get("username", "")
+        password = form.get("password", "")
+        if creds.get(username) == password:
+            request.session.update({"admin": True, "admin_user": username})
             return True
         return False
 
@@ -126,7 +129,14 @@ class UserAdmin(ModelView, model=User):
     column_list = [User.email, User.is_active, User.is_admin, User.created_at, User.id]
     column_searchable_list = [User.email]
     column_labels = {"is_active": "Active", "is_admin": "Admin", "created_at": "Created"}
+    form_columns = ["email", "hashed_password", "is_active", "is_admin"]
     can_delete = True
+
+    async def on_model_change(self, data, model, is_created, request):
+        from app.core.security import hash_password
+        password = data.get("hashed_password", "")
+        if password and not password.startswith("$2b$"):
+            data["hashed_password"] = hash_password(password)
 
 
 class CountryAdmin(ModelView, model=Country):
