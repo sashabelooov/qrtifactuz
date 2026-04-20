@@ -357,12 +357,13 @@
   function initMobileDrawer() {
     if (window.innerWidth > 768) return;
 
-    // Hide original navbar collapse entirely
     const style = document.createElement('style');
     style.textContent = `
       @media (max-width: 768px) {
-        .navbar-collapse { display: none !important; }
-        .navbar-toggler { display: none !important; }
+        /* Hide entire original navbar */
+        .navbar { display: none !important; }
+
+        /* Hamburger button fixed top-left */
         #mobileMenuBtn {
           position: fixed;
           top: 12px;
@@ -387,8 +388,9 @@
           height: 2px;
           background: #fff;
           border-radius: 2px;
-          transition: all 0.3s;
         }
+
+        /* Drawer */
         #mobileDrawer {
           position: fixed;
           top: 0;
@@ -399,9 +401,19 @@
           z-index: 99990;
           overflow-y: auto;
           transition: left 0.3s ease;
-          padding: 70px 12px 20px;
+          padding: 20px 12px;
+          display: flex;
+          flex-direction: column;
         }
         #mobileDrawer.open { left: 0; }
+        #mobileDrawer .drawer-title {
+          color: #fff;
+          font-size: 18px;
+          font-weight: 700;
+          padding: 10px 16px 20px;
+          border-bottom: 1px solid rgba(255,255,255,0.1);
+          margin-bottom: 10px;
+        }
         #mobileDrawer a {
           display: flex;
           align-items: center;
@@ -417,10 +429,16 @@
           background: rgba(255,255,255,0.1);
           color: #fff;
         }
-        #mobileDrawer a svg, #mobileDrawer a i {
-          width: 20px;
-          flex-shrink: 0;
+        #mobileDrawer a svg, #mobileDrawer a i { width: 20px; flex-shrink: 0; }
+        #mobileDrawer .drawer-logout {
+          margin-top: auto;
+          border-top: 1px solid rgba(255,255,255,0.1);
+          padding-top: 10px;
         }
+        #mobileDrawer .drawer-logout a { color: #f87171; }
+        #mobileDrawer .drawer-logout a:hover { background: rgba(248,113,113,0.15); }
+
+        /* Backdrop */
         #mobileBackdrop {
           display: none;
           position: fixed;
@@ -429,20 +447,29 @@
           z-index: 99980;
         }
         #mobileBackdrop.show { display: block; }
+
+        /* Push page content down so it's not under the hamburger */
+        .page-wrapper { padding-top: 60px !important; }
       }
     `;
     document.head.appendChild(style);
 
-    // Build drawer with cloned nav links
+    // Build drawer
     const drawer = document.createElement('div');
     drawer.id = 'mobileDrawer';
 
+    const title = document.createElement('div');
+    title.className = 'drawer-title';
+    title.textContent = 'Admin';
+    drawer.appendChild(title);
+
+    // Nav links
     const navLinks = document.querySelectorAll('.navbar-collapse .nav-link, .navbar-collapse a');
     const seen = new Set();
     navLinks.forEach(link => {
       const href = link.getAttribute('href');
       const text = link.textContent.trim();
-      if (!text || seen.has(href)) return;
+      if (!text || seen.has(href) || href === '/admin/logout') return;
       seen.add(href);
       const a = document.createElement('a');
       a.href = href || '#';
@@ -451,11 +478,19 @@
       drawer.appendChild(a);
     });
 
-    // Backdrop
+    // Logout at bottom
+    const logoutSection = document.createElement('div');
+    logoutSection.className = 'drawer-logout';
+    const logoutLink = document.createElement('a');
+    logoutLink.href = '/admin/logout';
+    logoutLink.innerHTML = '<i class="fa-solid fa-right-from-bracket"></i> Logout';
+    logoutSection.appendChild(logoutLink);
+    drawer.appendChild(logoutSection);
+
+    // Backdrop & button
     const backdrop = document.createElement('div');
     backdrop.id = 'mobileBackdrop';
 
-    // Hamburger button
     const btn = document.createElement('button');
     btn.id = 'mobileMenuBtn';
     btn.setAttribute('aria-label', 'Menu');
