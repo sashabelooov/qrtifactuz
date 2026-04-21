@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     # App
     SECRET_KEY: str
     DEBUG: bool = False
+    SHOW_DOCS: bool = True
 
     # Database
     DATABASE_URL: str
