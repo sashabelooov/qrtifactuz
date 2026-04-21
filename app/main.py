@@ -168,7 +168,7 @@ class MuseumAdmin(ModelView, model=Museum):
     column_list = [Museum.name, Museum.slug, Museum.city_id, Museum.is_active, Museum.qr_code_url, Museum.id]
     column_searchable_list = [Museum.name, Museum.slug]
     column_labels = {"city_id": "City", "is_active": "Active", "qr_code_url": "QR Code URL"}
-    form_excluded_columns = ["created_at", "updated_at", "halls"]
+    form_excluded_columns = ["created_at", "updated_at", "halls", "city_rel", "exhibits"]
     can_delete = True
 
     async def after_model_change(self, data, model, is_created, request):
