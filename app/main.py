@@ -154,9 +154,9 @@ class CityAdmin(ModelView, model=City):
     name = "City"
     name_plural = "Cities"
     icon = "fa-solid fa-city"
-    column_list = [City.name, City.country_id]
+    column_list = [City.name, City.country, City.created_at]
     column_searchable_list = [City.name]
-    column_labels = {"country_id": "Country"}
+    column_labels = {"country": "Country", "created_at": "Created"}
     form_excluded_columns = ["created_at", "museums"]
     can_delete = True
 
@@ -165,9 +165,9 @@ class MuseumAdmin(ModelView, model=Museum):
     name = "Museum"
     name_plural = "Museums"
     icon = "fa-solid fa-landmark"
-    column_list = [Museum.name, Museum.slug, Museum.city_id, Museum.is_active]
+    column_list = [Museum.name, Museum.slug, Museum.city_rel, Museum.is_active, Museum.created_at]
     column_searchable_list = [Museum.name, Museum.slug]
-    column_labels = {"city_id": "City", "is_active": "Active"}
+    column_labels = {"city_rel": "City", "is_active": "Active", "created_at": "Created"}
     form_excluded_columns = ["created_at", "updated_at", "halls", "city_rel", "exhibits", "qr_code_url"]
     can_delete = True
 
@@ -181,8 +181,8 @@ class HallAdmin(ModelView, model=Hall):
     name = "Hall"
     name_plural = "Halls"
     icon = "fa-solid fa-door-open"
-    column_list = [Hall.name, Hall.museum_id, Hall.floor]
-    column_labels = {"museum_id": "Museum"}
+    column_list = [Hall.name, Hall.museum, Hall.floor, Hall.created_at]
+    column_labels = {"museum": "Museum", "created_at": "Created"}
     form_excluded_columns = ["created_at", "updated_at", "exhibits"]
     can_delete = True
 
