@@ -127,9 +127,9 @@ class UserAdmin(ModelView, model=User):
     name = "User"
     name_plural = "Users"
     icon = "fa-solid fa-users"
-    column_list = [User.email, User.is_active, User.is_admin, User.created_at, User.id]
+    column_list = [User.email, User.is_active, User.is_admin]
     column_searchable_list = [User.email]
-    column_labels = {"is_active": "Active", "is_admin": "Admin", "created_at": "Created"}
+    column_labels = {"is_active": "Active", "is_admin": "Admin"}
     form_columns = ["email", "hashed_password", "is_active", "is_admin"]
     can_delete = True
 
@@ -144,9 +144,8 @@ class CountryAdmin(ModelView, model=Country):
     name = "Country"
     name_plural = "Countries"
     icon = "fa-solid fa-earth-asia"
-    column_list = [Country.name, Country.code, Country.created_at, Country.id]
+    column_list = [Country.name, Country.code]
     column_searchable_list = [Country.name]
-    column_labels = {"created_at": "Created"}
     form_excluded_columns = ["created_at", "cities"]
     can_delete = True
 
@@ -155,9 +154,9 @@ class CityAdmin(ModelView, model=City):
     name = "City"
     name_plural = "Cities"
     icon = "fa-solid fa-city"
-    column_list = [City.name, City.country_id, City.created_at, City.id]
+    column_list = [City.name, City.country_id]
     column_searchable_list = [City.name]
-    column_labels = {"country_id": "Country", "created_at": "Created"}
+    column_labels = {"country_id": "Country"}
     form_excluded_columns = ["created_at", "museums"]
     can_delete = True
 
@@ -166,10 +165,10 @@ class MuseumAdmin(ModelView, model=Museum):
     name = "Museum"
     name_plural = "Museums"
     icon = "fa-solid fa-landmark"
-    column_list = [Museum.name, Museum.slug, Museum.city_id, Museum.is_active, Museum.qr_code_url, Museum.id]
+    column_list = [Museum.name, Museum.slug, Museum.city_id, Museum.is_active]
     column_searchable_list = [Museum.name, Museum.slug]
-    column_labels = {"city_id": "City", "is_active": "Active", "qr_code_url": "QR Code URL"}
-    form_excluded_columns = ["created_at", "updated_at", "halls", "city_rel", "exhibits"]
+    column_labels = {"city_id": "City", "is_active": "Active"}
+    form_excluded_columns = ["created_at", "updated_at", "halls", "city_rel", "exhibits", "qr_code_url"]
     can_delete = True
 
     async def after_model_change(self, data, model, is_created, request):
@@ -182,9 +181,9 @@ class HallAdmin(ModelView, model=Hall):
     name = "Hall"
     name_plural = "Halls"
     icon = "fa-solid fa-door-open"
-    column_list = [Hall.name, Hall.museum_id, Hall.floor, Hall.id]
+    column_list = [Hall.name, Hall.museum_id, Hall.floor]
     column_labels = {"museum_id": "Museum"}
-    form_excluded_columns = ["created_at", "updated_at"]
+    form_excluded_columns = ["created_at", "updated_at", "exhibits"]
     can_delete = True
 
 
@@ -192,14 +191,13 @@ class ExhibitAdmin(ModelView, model=Exhibit):
     name = "Exhibit"
     name_plural = "Exhibits"
     icon = "fa-solid fa-image"
-    column_list = [Exhibit.slug, Exhibit.status, Exhibit.views_count, Exhibit.listens_count, Exhibit.id]
+    column_list = [Exhibit.slug, Exhibit.status, Exhibit.views_count, Exhibit.listens_count]
     column_searchable_list = [Exhibit.slug]
     column_labels = {
-        "museum": "Museum", "hall": "Hall", "created_by": "Created By",
-        "qr_code_url": "QR Code URL", "views_count": "Views", "listens_count": "Listens",
-        "created_at": "Created", "updated_at": "Updated",
+        "museum": "Museum", "hall": "Hall",
+        "views_count": "Views", "listens_count": "Listens",
     }
-    form_columns = ["museum", "hall", "slug", "qr_code_url", "status"]
+    form_columns = ["museum", "hall", "slug", "status"]
     can_delete = True
 
 
@@ -207,8 +205,8 @@ class ExhibitTranslationAdmin(ModelView, model=ExhibitTranslation):
     name = "Translation"
     name_plural = "Translations"
     icon = "fa-solid fa-language"
-    column_list = [ExhibitTranslation.exhibit, ExhibitTranslation.language, ExhibitTranslation.title, ExhibitTranslation.id]
-    column_labels = {"exhibit": "Exhibit", "language": "Language", "title": "Title", "description": "Description"}
+    column_list = [ExhibitTranslation.exhibit, ExhibitTranslation.language, ExhibitTranslation.title]
+    column_labels = {"exhibit": "Exhibit", "language": "Language", "title": "Title"}
     form_columns = ["exhibit", "language", "title", "description"]
     can_delete = True
 
@@ -217,10 +215,10 @@ class ExhibitAudioTrackAdmin(ModelView, model=ExhibitAudioTrack):
     name = "Audio Track"
     name_plural = "Audio Tracks"
     icon = "fa-solid fa-headphones"
-    column_list = [ExhibitAudioTrack.exhibit, ExhibitAudioTrack.language, ExhibitAudioTrack.public_url, ExhibitAudioTrack.duration_seconds, ExhibitAudioTrack.id]
+    column_list = [ExhibitAudioTrack.exhibit, ExhibitAudioTrack.language, ExhibitAudioTrack.duration_seconds]
     column_labels = {
         "exhibit": "Exhibit", "language": "Language",
-        "storage_path": "File", "public_url": "Public URL", "duration_seconds": "Duration (sec)",
+        "storage_path": "File", "duration_seconds": "Duration (sec)",
     }
     form_overrides = {"storage_path": FileField}
     form_columns = ["exhibit", "language", "storage_path", "duration_seconds"]
@@ -244,9 +242,9 @@ class ExhibitMediaAdmin(ModelView, model=ExhibitMedia):
     name = "Exhibit Media"
     name_plural = "Exhibit Media"
     icon = "fa-solid fa-photo-film"
-    column_list = [ExhibitMedia.exhibit, ExhibitMedia.public_url, ExhibitMedia.media_type, ExhibitMedia.is_cover, ExhibitMedia.id]
+    column_list = [ExhibitMedia.exhibit, ExhibitMedia.media_type, ExhibitMedia.is_cover, ExhibitMedia.sort_order]
     column_labels = {
-        "exhibit": "Exhibit", "storage_path": "File", "public_url": "Public URL",
+        "exhibit": "Exhibit", "storage_path": "File",
         "media_type": "Type", "is_cover": "Cover", "sort_order": "Order",
     }
     form_overrides = {"storage_path": FileField}
