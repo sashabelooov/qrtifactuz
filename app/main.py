@@ -2,6 +2,7 @@ import uuid
 import asyncio
 import boto3
 from fastapi import FastAPI
+from fastapi.responses import RedirectResponse
 from fastapi.openapi.utils import get_openapi
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
@@ -43,8 +44,8 @@ app = FastAPI(
         "Supported language codes: `uz` (Uzbek), `ru` (Russian), `en` (English)."
     ),
     debug=settings.DEBUG,
-    docs_url="/docs" if settings.DEBUG else None,
-    redoc_url="/redoc" if settings.DEBUG else None,
+    docs_url="/docs" if settings.SHOW_DOCS else None,
+    redoc_url="/redoc" if settings.SHOW_DOCS else None,
     swagger_ui_oauth2_redirect_url="/docs/oauth2-redirect",
     openapi_tags=[],
 )
@@ -293,6 +294,11 @@ app.include_router(auth_router, prefix="/api/v1")
 app.include_router(profiles_router, prefix="/api/v1")
 app.include_router(museums_router, prefix="/api/v1")
 app.include_router(exhibits_router, prefix="/api/v1")
+
+
+@app.get("/", include_in_schema=False)
+async def root():
+    return RedirectResponse(url="/docs")
 
 
 @app.get("/health", tags=["Health"])
