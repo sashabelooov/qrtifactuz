@@ -42,9 +42,9 @@ class Settings(BaseSettings):
     BACKEND_URL: str = "http://localhost:8000"
 
     # Admin panel
-    ADMIN_USERNAME: str = "admin"
-    ADMIN_PASSWORD: str = "changeme"
-    ADMIN_SECRET_KEY: str = "admin-secret-change-in-production"
+    ADMIN_USERNAME: str
+    ADMIN_PASSWORD: str
+    ADMIN_SECRET_KEY: str
     ADMIN_CREDENTIALS: str = ""  # "user1:pass1,user2:pass2" for multiple admins
 
     def get_admin_credentials(self) -> dict[str, str]:
