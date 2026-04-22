@@ -57,6 +57,8 @@ class ExhibitTranslation(Base):
     language: Mapped[LanguageCode] = mapped_column(Enum(LanguageCode), nullable=False)
     title: Mapped[str] = mapped_column(String(500), nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    audio_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    media_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
     exhibit: Mapped["Exhibit"] = relationship("Exhibit", back_populates="translations", lazy="selectin")
 
