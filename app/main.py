@@ -218,7 +218,21 @@ class ExhibitTranslationAdmin(ModelView, model=ExhibitTranslation):
     name_plural = "Translations"
     icon = "fa-solid fa-language"
     column_list = [ExhibitTranslation.exhibit, ExhibitTranslation.language, ExhibitTranslation.title]
-    column_labels = {"exhibit": "Exhibit", "language": "Language", "title": "Title"}
+    column_labels = {
+        "exhibit": "Exhibit", "language": "Language", "title": "Title",
+        "audio_url": "Audio", "media_url": "Image",
+    }
+    column_details_list = ["exhibit", "language", "title", "description", "audio_url", "media_url"]
+    column_formatters_detail = {
+        "audio_url": lambda m, a: Markup(
+            f'<audio controls style="width:100%"><source src="{m.audio_url}" type="audio/mpeg">'
+            f'<source src="{m.audio_url}" type="audio/mp4">'
+            f'Your browser does not support audio.</audio>'
+        ) if m.audio_url else "",
+        "media_url": lambda m, a: Markup(
+            f'<img src="{m.media_url}" style="max-width:400px;max-height:300px;border-radius:6px">'
+        ) if m.media_url else "",
+    }
     form_columns = ["exhibit", "language", "title", "description"]
     can_delete = True
 
@@ -233,14 +247,24 @@ class ExhibitTranslationAdmin(ModelView, model=ExhibitTranslation):
         from sqlalchemy.ext.asyncio import AsyncSession
         audio_file = data.pop("audio_file", None)
         media_file = data.pop("media_file", None)
+
+        # sqladmin puts the Exhibit ORM object in data["exhibit"], not data["exhibit_id"]
         exhibit_id = data.get("exhibit_id") or getattr(model, "exhibit_id", None)
+        if not exhibit_id:
+            exhibit_obj = data.get("exhibit") or getattr(model, "exhibit", None)
+            if exhibit_obj is not None:
+                exhibit_id = getattr(exhibit_obj, "id", None)
+
         language = data.get("language") or getattr(model, "language", None)
+        if hasattr(language, "value"):
+            language = language.value
 
         if audio_file and hasattr(audio_file, "filename") and audio_file.filename and exhibit_id:
             content = await audio_file.read()
             key, url = await asyncio.get_event_loop().run_in_executor(
                 None, _upload_file, content, audio_file.filename, "audio"
             )
+            data["audio_url"] = url
             async with AsyncSession(engine) as session:
                 track = ExhibitAudioTrack(
                     exhibit_id=exhibit_id, language=language,
@@ -254,6 +278,7 @@ class ExhibitTranslationAdmin(ModelView, model=ExhibitTranslation):
             key, url = await asyncio.get_event_loop().run_in_executor(
                 None, _upload_file, content, media_file.filename, "media"
             )
+            data["media_url"] = url
             async with AsyncSession(engine) as session:
                 media = ExhibitMedia(
                     exhibit_id=exhibit_id, storage_path=key,
