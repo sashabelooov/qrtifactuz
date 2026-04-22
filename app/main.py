@@ -167,8 +167,14 @@ class MuseumAdmin(ModelView, model=Museum):
     name_plural = "Museums"
     icon = "fa-solid fa-landmark"
     column_list = [Museum.name, Museum.slug, Museum.city_rel, Museum.is_active, Museum.created_at]
+    column_details_list = ["name", "slug", "city_rel", "description", "address", "logo_url", "qr_code_url", "is_active", "created_at"]
     column_searchable_list = [Museum.name, Museum.slug]
-    column_labels = {"city_rel": "City", "is_active": "Active", "created_at": "Created"}
+    column_labels = {"city_rel": "City", "is_active": "Active", "created_at": "Created", "qr_code_url": "QR Code", "logo_url": "Logo"}
+    column_formatters_detail = {
+        "qr_code_url": lambda m, a: Markup(
+            f'<img src="{m.qr_code_url}" style="width:180px;height:180px">'
+        ) if m.qr_code_url else "Not generated yet",
+    }
     form_excluded_columns = ["created_at", "updated_at", "halls", "city_rel", "exhibits", "qr_code_url"]
     can_delete = True
 
