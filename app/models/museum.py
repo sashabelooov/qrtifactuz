@@ -51,8 +51,8 @@ class Museum(Base):
     updated_at: Mapped[str] = mapped_column(server_default=func.now(), onupdate=func.now())
 
     city_rel: Mapped["City | None"] = relationship("City", back_populates="museums", lazy="selectin")
-    halls: Mapped[list["Hall"]] = relationship("Hall", back_populates="museum", lazy="selectin")
-    exhibits: Mapped[list["Exhibit"]] = relationship("Exhibit", back_populates="museum", lazy="noload")
+    halls: Mapped[list["Hall"]] = relationship("Hall", back_populates="museum", lazy="selectin", cascade="all, delete-orphan", passive_deletes=True)
+    exhibits: Mapped[list["Exhibit"]] = relationship("Exhibit", back_populates="museum", lazy="noload", cascade="all, delete-orphan", passive_deletes=True)
 
     def __repr__(self) -> str:
         return self.name
