@@ -267,7 +267,9 @@ class ExhibitAudioTrackAdmin(ModelView, model=ExhibitAudioTrack):
     name = "Audio Track"
     name_plural = "Audio Tracks"
     icon = "fa-solid fa-headphones"
-    is_visible = False
+
+    def is_visible(self, request) -> bool:
+        return False
     column_list = [ExhibitAudioTrack.exhibit, ExhibitAudioTrack.language, ExhibitAudioTrack.duration_seconds]
     column_details_list = ["exhibit", "language", "public_url", "duration_seconds"]
     column_labels = {
@@ -303,7 +305,9 @@ class ExhibitMediaAdmin(ModelView, model=ExhibitMedia):
     name = "Exhibit Media"
     name_plural = "Exhibit Media"
     icon = "fa-solid fa-photo-film"
-    is_visible = False
+
+    def is_visible(self, request) -> bool:
+        return False
     column_list = [ExhibitMedia.exhibit, ExhibitMedia.media_type, ExhibitMedia.is_cover, ExhibitMedia.sort_order]
     column_details_list = ["exhibit", "public_url", "media_type", "is_cover", "sort_order"]
     column_labels = {
