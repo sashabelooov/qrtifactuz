@@ -205,17 +205,15 @@ class ExhibitAdmin(ModelView, model=Exhibit):
         "views_count": "Views", "listens_count": "Listens",
     }
     form_columns = ["museum", "hall", "slug", "status"]
+    inline_models = [
+        (ExhibitTranslation, {"form_columns": ["language", "title", "description"]}),
+    ]
     can_delete = True
 
-
-class ExhibitTranslationAdmin(ModelView, model=ExhibitTranslation):
-    name = "Translation"
-    name_plural = "Translations"
-    icon = "fa-solid fa-language"
-    column_list = [ExhibitTranslation.exhibit, ExhibitTranslation.language, ExhibitTranslation.title]
-    column_labels = {"exhibit": "Exhibit", "language": "Language", "title": "Title"}
-    form_columns = ["exhibit", "language", "title", "description"]
-    can_delete = True
+    async def after_model_change(self, data, model, is_created, request):
+        if is_created:
+            from app.tasks.qr_tasks import generate_exhibit_qr
+            generate_exhibit_qr.delay(str(model.id), model.slug)
 
 
 class ExhibitAudioTrackAdmin(ModelView, model=ExhibitAudioTrack):
@@ -294,7 +292,6 @@ admin.add_view(CityAdmin)
 admin.add_view(MuseumAdmin)
 admin.add_view(HallAdmin)
 admin.add_view(ExhibitAdmin)
-admin.add_view(ExhibitTranslationAdmin)
 admin.add_view(ExhibitMediaAdmin)
 admin.add_view(ExhibitAudioTrackAdmin)
 admin.add_view(UserAdmin)
