@@ -70,7 +70,7 @@ services:
       - "80:80"
     volumes:
       - ./docker/nginx.conf:/etc/nginx/conf.d/default.conf
-      - static_uploads:/app/static
+      - static_uploads:/app/static/uploads
     depends_on:
       - api
 
