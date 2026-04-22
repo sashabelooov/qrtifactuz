@@ -224,7 +224,9 @@ class ExhibitAudioTrackAdmin(ModelView, model=ExhibitAudioTrack):
     }
     column_formatters_detail = {
         "public_url": lambda m, a: Markup(
-            f'<audio controls style="width:100%"><source src="{m.public_url}"></audio>'
+            f'<audio controls style="width:100%"><source src="{m.public_url}" type="audio/mpeg">'
+            f'<source src="{m.public_url}" type="audio/mp4">'
+            f'<source src="{m.public_url}" type="audio/ogg">Your browser does not support audio.</audio>'
         ) if m.public_url else "",
     }
     form_overrides = {"storage_path": FileField}
