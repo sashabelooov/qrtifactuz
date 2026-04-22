@@ -265,6 +265,7 @@ class ExhibitTranslationAdmin(ModelView, model=ExhibitTranslation):
                 None, _upload_file, content, audio_file.filename, "audio"
             )
             data["audio_url"] = url
+            model.audio_url = url
             async with AsyncSession(engine) as session:
                 track = ExhibitAudioTrack(
                     exhibit_id=exhibit_id, language=language,
@@ -279,6 +280,7 @@ class ExhibitTranslationAdmin(ModelView, model=ExhibitTranslation):
                 None, _upload_file, content, media_file.filename, "media"
             )
             data["media_url"] = url
+            model.media_url = url
             async with AsyncSession(engine) as session:
                 media = ExhibitMedia(
                     exhibit_id=exhibit_id, storage_path=key,
