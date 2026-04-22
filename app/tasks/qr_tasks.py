@@ -9,7 +9,7 @@ from app.core.database import engine
 
 def _save_sync(model_class, record_id: str, qr_url: str):
     from sqlalchemy import create_engine as _ce
-    sync_url = str(engine.url).replace("postgresql+asyncpg://", "postgresql+psycopg2://")
+    sync_url = engine.url.render_as_string(hide_password=False).replace("postgresql+asyncpg://", "postgresql+psycopg2://")
     sync_engine = _ce(sync_url)
     with Session(sync_engine) as session:
         session.execute(
