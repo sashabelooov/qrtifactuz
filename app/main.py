@@ -11,6 +11,7 @@ from starlette.responses import Response
 from sqladmin import Admin, ModelView
 from sqladmin.authentication import AuthenticationBackend
 from starlette.requests import Request
+from markupsafe import Markup
 from wtforms import FileField
 from app.api.v1.museum.router import router as museums_router
 from app.models.user import User
@@ -216,9 +217,15 @@ class ExhibitAudioTrackAdmin(ModelView, model=ExhibitAudioTrack):
     name_plural = "Audio Tracks"
     icon = "fa-solid fa-headphones"
     column_list = [ExhibitAudioTrack.exhibit, ExhibitAudioTrack.language, ExhibitAudioTrack.duration_seconds]
+    column_details_list = ["exhibit", "language", "public_url", "duration_seconds"]
     column_labels = {
         "exhibit": "Exhibit", "language": "Language",
-        "storage_path": "File", "duration_seconds": "Duration (sec)",
+        "storage_path": "File", "public_url": "Audio", "duration_seconds": "Duration (sec)",
+    }
+    column_formatters_detail = {
+        "public_url": lambda m, a: Markup(
+            f'<audio controls style="width:100%"><source src="{m.public_url}"></audio>'
+        ) if m.public_url else "",
     }
     form_overrides = {"storage_path": FileField}
     form_columns = ["exhibit", "language", "storage_path", "duration_seconds"]
@@ -243,9 +250,17 @@ class ExhibitMediaAdmin(ModelView, model=ExhibitMedia):
     name_plural = "Exhibit Media"
     icon = "fa-solid fa-photo-film"
     column_list = [ExhibitMedia.exhibit, ExhibitMedia.media_type, ExhibitMedia.is_cover, ExhibitMedia.sort_order]
+    column_details_list = ["exhibit", "public_url", "media_type", "is_cover", "sort_order"]
     column_labels = {
         "exhibit": "Exhibit", "storage_path": "File",
-        "media_type": "Type", "is_cover": "Cover", "sort_order": "Order",
+        "public_url": "Preview", "media_type": "Type", "is_cover": "Cover", "sort_order": "Order",
+    }
+    column_formatters_detail = {
+        "public_url": lambda m, a: Markup(
+            f'<img src="{m.public_url}" style="max-width:400px;max-height:300px;border-radius:6px">'
+        ) if m.public_url and m.media_type == "image" else Markup(
+            f'<video controls style="max-width:400px"><source src="{m.public_url}"></video>'
+        ) if m.public_url else "",
     }
     form_overrides = {"storage_path": FileField}
     form_columns = ["exhibit", "storage_path", "media_type", "is_cover", "sort_order"]
