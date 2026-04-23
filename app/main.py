@@ -205,7 +205,30 @@ class ExhibitAdmin(ModelView, model=Exhibit):
         "views_count": "Views", "listens_count": "Listens",
         "translations": "Translations", "media": "Images", "audio_tracks": "Audio",
     }
-    column_details_list = ["museum", "hall", "slug", "status", "translations"]
+    column_details_list = ["museum", "hall", "slug", "status", "translations", "media", "audio_tracks"]
+    show_compact_lists = False
+    column_formatters_detail = {
+        "media": lambda m, a: [
+            Markup(
+                f'<img src="{item.public_url}" '
+                f'style="max-width:220px;max-height:160px;border-radius:6px;margin:4px;display:block">'
+            ) if item.public_url else Markup(repr(item))
+            for item in (m.media or [])
+        ],
+        "audio_tracks": lambda m, a: [
+            Markup(
+                f'<div style="margin:4px 0">'
+                f'<span style="font-size:11px;font-weight:bold;background:#e8e8e8;'
+                f'padding:2px 6px;border-radius:3px;display:inline-block;margin-bottom:4px">'
+                f'[{str(item.language).upper()}]</span><br>'
+                f'<audio controls style="width:280px">'
+                f'<source src="{item.public_url}" type="audio/mpeg">'
+                f'<source src="{item.public_url}" type="audio/ogg">'
+                f'Your browser does not support audio.</audio></div>'
+            ) if item.public_url else Markup(f'<span>[{item.language}] no file</span>')
+            for item in (m.audio_tracks or [])
+        ],
+    }
     form_columns = ["museum", "hall", "slug", "status"]
     can_delete = True
 
