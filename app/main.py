@@ -259,15 +259,10 @@ class ExhibitTranslationAdmin(ModelView, model=ExhibitTranslation):
             if content:
                 self._pending_media = (content, media_file.filename)
 
-        print(f"[TRANSLATION_ON_CHANGE] is_created={is_created} "
-              f"audio={self._pending_audio is not None} media={self._pending_media is not None}", flush=True)
-
     async def after_model_change(self, data, model, is_created, request):
         from app.core.database import engine
         from sqlalchemy.ext.asyncio import AsyncSession
         from sqlalchemy import update as sql_update
-
-        print(f"[TRANSLATION_AFTER_CHANGE] is_created={is_created} id={model.id}", flush=True)
 
         language = model.language.value if hasattr(model.language, "value") else model.language
 
@@ -287,7 +282,6 @@ class ExhibitTranslationAdmin(ModelView, model=ExhibitTranslation):
                     storage_path=key, public_url=url,
                 ))
                 self._pending_audio = None
-                print(f"[TRANSLATION_AFTER_CHANGE] saved audio: {url}", flush=True)
 
             if self._pending_media:
                 content, filename = self._pending_media
@@ -304,7 +298,6 @@ class ExhibitTranslationAdmin(ModelView, model=ExhibitTranslation):
                     public_url=url, media_type="image", is_cover=False, sort_order=0,
                 ))
                 self._pending_media = None
-                print(f"[TRANSLATION_AFTER_CHANGE] saved media: {url}", flush=True)
 
             await session.commit()
 
