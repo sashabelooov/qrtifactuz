@@ -242,11 +242,14 @@ class ExhibitTranslationAdmin(ModelView, model=ExhibitTranslation):
         form_class.media_file = FileField("Media File (image/video)")
         return form_class
 
+    column_default_sort = [("created_at", True)]
+
     async def on_model_change(self, data, model, is_created, request):
         from app.core.database import engine
         from sqlalchemy.ext.asyncio import AsyncSession
-        audio_file = data.pop("audio_file", None)
-        media_file = data.pop("media_file", None)
+        form = await request.form()
+        audio_file = data.pop("audio_file", None) or form.get("audio_file")
+        media_file = data.pop("media_file", None) or form.get("media_file")
 
         # sqladmin puts the Exhibit ORM object in data["exhibit"], not data["exhibit_id"]
         exhibit_id = data.get("exhibit_id") or getattr(model, "exhibit_id", None)
