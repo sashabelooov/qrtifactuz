@@ -206,9 +206,24 @@ class ExhibitAdmin(ModelView, model=Exhibit):
         "translations": "Translations", "media": "Images", "audio_tracks": "Audio",
     }
     column_details_list = ["museum", "hall", "slug", "status", "translations", "media", "audio_tracks"]
+    show_compact_lists = False
     column_formatters_detail = {
-        "media": lambda m, a: Markup("<b>TEST_IMAGE</b>"),
-        "audio_tracks": lambda m, a: Markup("<b>TEST_AUDIO</b>"),
+        "media": lambda m, a: [
+            Markup(
+                f'<img src="{item.public_url}" '
+                f'style="max-width:220px;max-height:160px;border-radius:6px;margin:4px;display:block">'
+            ) if item.public_url else Markup(repr(item))
+            for item in (m.media or [])
+        ],
+        "audio_tracks": lambda m, a: [
+            Markup(
+                f'<audio controls style="width:280px;margin:4px">'
+                f'<source src="{item.public_url}" type="audio/mpeg">'
+                f'<source src="{item.public_url}" type="audio/ogg">'
+                f'Your browser does not support audio.</audio>'
+            ) if item.public_url else Markup(repr(item))
+            for item in (m.audio_tracks or [])
+        ],
     }
     form_columns = ["museum", "hall", "slug", "status"]
     can_delete = True
