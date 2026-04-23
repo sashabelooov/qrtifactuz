@@ -203,6 +203,19 @@ class ExhibitAdmin(ModelView, model=Exhibit):
     column_labels = {
         "museum": "Museum", "hall": "Hall",
         "views_count": "Views", "listens_count": "Listens",
+        "translations": "Translations", "media": "Images", "audio_tracks": "Audio",
+    }
+    column_details_list = ["museum", "hall", "slug", "status", "translations", "media", "audio_tracks"]
+    column_formatters_detail = {
+        "media": lambda m, a: Markup("".join(
+            f'<img src="{item.public_url}" style="max-width:220px;max-height:160px;border-radius:6px;margin:4px">'
+            for item in (m.media or []) if item.public_url
+        )),
+        "audio_tracks": lambda m, a: Markup("".join(
+            f'<div style="margin:6px 0"><b>{item.language}</b><br>'
+            f'<audio controls style="width:100%"><source src="{item.public_url}"></audio></div>'
+            for item in (m.audio_tracks or []) if item.public_url
+        )),
     }
     form_columns = ["museum", "hall", "slug", "status"]
     can_delete = True
