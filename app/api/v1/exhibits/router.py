@@ -20,15 +20,14 @@ router = APIRouter()
     response_model=list[ExhibitResponse],
     tags=["Exhibits"],
     summary="List exhibits",
-    description="Returns a list of exhibits. Filter by `museum_id`, `hall_id`, or `status` (draft, published, archived). Public endpoint — no authentication required.",
+    description="Returns a list of exhibits. Filter by `museum_id` or `status` (draft, published, archived). Public endpoint — no authentication required.",
 )
 async def list_exhibits(
     museum_id: uuid.UUID | None = None,
-    hall_id: uuid.UUID | None = None,
     status: ExhibitStatus | None = None,
     db: AsyncSession = Depends(get_db),
 ):
-    return await exhibit_service.get_all_exhibits(db, museum_id, status, hall_id)
+    return await exhibit_service.get_all_exhibits(db, museum_id, status)
 
 
 @router.get(

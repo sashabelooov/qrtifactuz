@@ -40,13 +40,11 @@ class ExhibitAudioTrackResponse(BaseModel):
 
 class ExhibitCreate(BaseModel):
     museum_id: uuid.UUID
-    hall_id: Optional[uuid.UUID] = None
     slug: str
     translations: list[ExhibitTranslationCreate] = []
 
 
 class ExhibitUpdate(BaseModel):
-    hall_id: Optional[uuid.UUID] = None
     slug: Optional[str] = None
     status: Optional[ExhibitStatus] = None
     translations: Optional[list[ExhibitTranslationCreate]] = None
@@ -57,7 +55,6 @@ class ExhibitResponse(BaseModel):
 
     id: uuid.UUID
     museum_id: uuid.UUID
-    hall_id: Optional[uuid.UUID] = None
     slug: str
     qr_code_url: Optional[str] = None
     status: ExhibitStatus

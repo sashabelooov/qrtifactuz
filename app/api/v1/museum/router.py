@@ -7,7 +7,6 @@ from app.schemas.museum import (
     CountryCreate, CountryResponse,
     CityCreate, CityResponse,
     MuseumCreate, MuseumUpdate, MuseumResponse,
-    HallCreate, HallResponse,
 )
 from app.services import museum as museum_service
 router = APIRouter()
@@ -172,33 +171,3 @@ async def delete_museum(
     await museum_service.delete_museum(db, museum_id)
 
 
-@router.post(
-    "/admin/museums/{museum_id}/halls",
-    response_model=HallResponse,
-    status_code=201,
-    tags=["Admin — Museums"],
-    summary="Create hall",
-    description="Creates a new hall inside a museum. Halls are used to group exhibits by physical location within the museum.",
-)
-async def create_hall(
-    museum_id: uuid.UUID,
-    data: HallCreate,
-    db: AsyncSession = Depends(get_db),
-    _: object = Depends(get_current_admin),
-):
-    return await museum_service.create_hall(db, museum_id, data)
-
-
-@router.delete(
-    "/admin/halls/{hall_id}",
-    status_code=204,
-    tags=["Admin — Museums"],
-    summary="Delete hall",
-    description="Deletes a hall from a museum. Admin only.",
-)
-async def delete_hall(
-    hall_id: uuid.UUID,
-    db: AsyncSession = Depends(get_db),
-    _: object = Depends(get_current_admin),
-):
-    await museum_service.delete_hall(db, hall_id)

@@ -10,7 +10,6 @@ async def get_all_exhibits(
     db: AsyncSession,
     museum_id: uuid.UUID | None = None,
     status: ExhibitStatus | None = None,
-    hall_id: uuid.UUID | None = None,
 ) -> list[Exhibit]:
     query = select(Exhibit)
 
@@ -18,8 +17,6 @@ async def get_all_exhibits(
         query = query.where(Exhibit.museum_id == museum_id)
     if status:
         query = query.where(Exhibit.status == status)
-    if hall_id:
-        query = query.where(Exhibit.hall_id == hall_id)
 
     result = await db.execute(query)
     return result.scalars().all()
