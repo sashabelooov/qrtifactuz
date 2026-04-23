@@ -239,53 +239,56 @@ class ExhibitTranslationAdmin(ModelView, model=ExhibitTranslation):
 
     column_default_sort = [("created_at", True)]
 
-    async def on_model_change(self, data, model, is_created, request):
+    async def after_model_change(self, data, model, is_created, request):
         from app.core.database import engine
         from sqlalchemy.ext.asyncio import AsyncSession
+        from sqlalchemy import update as sql_update
+
         form = await request.form()
-        audio_file = data.pop("audio_file", None) or form.get("audio_file")
-        media_file = data.pop("media_file", None) or form.get("media_file")
+        audio_file = form.get("audio_file")
+        media_file = form.get("media_file")
 
-        # sqladmin puts the Exhibit ORM object in data["exhibit"], not data["exhibit_id"]
-        exhibit_id = data.get("exhibit_id") or getattr(model, "exhibit_id", None)
-        if not exhibit_id:
-            exhibit_obj = data.get("exhibit") or getattr(model, "exhibit", None)
-            if exhibit_obj is not None:
-                exhibit_id = getattr(exhibit_obj, "id", None)
+        print(f"[TRANSLATION_UPLOAD] is_created={is_created} id={model.id} "
+              f"exhibit_id={model.exhibit_id} lang={model.language} "
+              f"audio={getattr(audio_file, 'filename', None)} "
+              f"media={getattr(media_file, 'filename', None)}", flush=True)
 
-        language = data.get("language") or getattr(model, "language", None)
-        if hasattr(language, "value"):
-            language = language.value
+        language = model.language.value if hasattr(model.language, "value") else model.language
 
-        if audio_file and hasattr(audio_file, "filename") and audio_file.filename and exhibit_id:
-            content = await audio_file.read()
-            key, url = await asyncio.get_event_loop().run_in_executor(
-                None, _upload_file, content, audio_file.filename, "audio"
-            )
-            data["audio_url"] = url
-            model.audio_url = url
-            async with AsyncSession(engine) as session:
-                track = ExhibitAudioTrack(
-                    exhibit_id=exhibit_id, language=language,
+        async with AsyncSession(engine) as session:
+            if audio_file and hasattr(audio_file, "filename") and audio_file.filename:
+                content = await audio_file.read()
+                key, url = await asyncio.get_event_loop().run_in_executor(
+                    None, _upload_file, content, audio_file.filename, "audio"
+                )
+                await session.execute(
+                    sql_update(ExhibitTranslation)
+                    .where(ExhibitTranslation.id == model.id)
+                    .values(audio_url=url)
+                )
+                session.add(ExhibitAudioTrack(
+                    exhibit_id=model.exhibit_id, language=language,
                     storage_path=key, public_url=url,
-                )
-                session.add(track)
-                await session.commit()
+                ))
+                print(f"[TRANSLATION_UPLOAD] saved audio: {url}", flush=True)
 
-        if media_file and hasattr(media_file, "filename") and media_file.filename and exhibit_id:
-            content = await media_file.read()
-            key, url = await asyncio.get_event_loop().run_in_executor(
-                None, _upload_file, content, media_file.filename, "media"
-            )
-            data["media_url"] = url
-            model.media_url = url
-            async with AsyncSession(engine) as session:
-                media = ExhibitMedia(
-                    exhibit_id=exhibit_id, storage_path=key,
-                    public_url=url, media_type="image", is_cover=False, sort_order=0,
+            if media_file and hasattr(media_file, "filename") and media_file.filename:
+                content = await media_file.read()
+                key, url = await asyncio.get_event_loop().run_in_executor(
+                    None, _upload_file, content, media_file.filename, "media"
                 )
-                session.add(media)
-                await session.commit()
+                await session.execute(
+                    sql_update(ExhibitTranslation)
+                    .where(ExhibitTranslation.id == model.id)
+                    .values(media_url=url)
+                )
+                session.add(ExhibitMedia(
+                    exhibit_id=model.exhibit_id, storage_path=key,
+                    public_url=url, media_type="image", is_cover=False, sort_order=0,
+                ))
+                print(f"[TRANSLATION_UPLOAD] saved media: {url}", flush=True)
+
+            await session.commit()
 
 
 class ExhibitAudioTrackAdmin(ModelView, model=ExhibitAudioTrack):
