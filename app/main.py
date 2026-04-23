@@ -193,6 +193,7 @@ class ExhibitAdmin(ModelView, model=Exhibit):
     column_searchable_list = [Exhibit.slug]
     column_labels = {
         "museum": "Museum",
+        "slug": "Title",
         "views_count": "Views", "listens_count": "Listens",
         "translations": "Translations",
     }
