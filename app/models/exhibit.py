@@ -59,6 +59,7 @@ class ExhibitTranslation(Base):
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     audio_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     media_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    created_at: Mapped[str] = mapped_column(server_default=func.now())
 
     exhibit: Mapped["Exhibit"] = relationship("Exhibit", back_populates="translations", lazy="selectin")
 
