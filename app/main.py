@@ -196,20 +196,21 @@ class ExhibitAdmin(ModelView, model=Exhibit):
         "views_count": "Views", "listens_count": "Listens",
         "translations": "Translations",
     }
-    column_details_list = ["museum", "slug", "status", "translations", "media", "audio_tracks"]
+    column_details_list = ["museum", "slug", "status", "translations"]
     show_compact_lists = False
     column_formatters_detail = {
-        "media": lambda m, a: [
-            Markup(f'<img src="{item.public_url}" style="max-width:300px;max-height:220px;border-radius:6px;margin:4px">')
-            for item in (m.media or [])
-        ],
-        "audio_tracks": lambda m, a: [
+        "translations": lambda m, a: [
             Markup(
-                f'<div style="margin:4px 0"><span style="font-size:11px;color:#888">[{item.language}]</span><br>'
-                f'<audio controls style="width:100%"><source src="{item.public_url}" type="audio/mpeg">'
-                f'<source src="{item.public_url}" type="audio/mp4">Your browser does not support audio.</audio></div>'
+                f'<div style="border:1px solid #e5e7eb;border-radius:8px;padding:12px;margin:6px 0">'
+                f'<div style="font-weight:600;margin-bottom:8px">[{t.language}] {t.title}</div>'
+                + (f'<img src="{t.media_url}" style="max-width:300px;max-height:220px;border-radius:6px;display:block;margin-bottom:8px">'
+                   if t.media_url else '')
+                + (f'<audio controls style="width:100%"><source src="{t.audio_url}" type="audio/mpeg">'
+                   f'<source src="{t.audio_url}" type="audio/mp4"></audio>'
+                   if t.audio_url else '')
+                + '</div>'
             )
-            for item in (m.audio_tracks or [])
+            for t in (m.translations or [])
         ],
     }
     form_columns = ["museum", "slug", "status"]
@@ -277,12 +278,10 @@ class ExhibitTranslationAdmin(ModelView, model=ExhibitTranslation):
         from sqlalchemy.ext.asyncio import AsyncSession
         from sqlalchemy import update as sql_update
 
-        language = model.language.value if hasattr(model.language, "value") else model.language
-
         async with AsyncSession(engine) as session:
             if self._pending_audio:
                 content, filename = self._pending_audio
-                key, url = await asyncio.get_event_loop().run_in_executor(
+                _, url = await asyncio.get_event_loop().run_in_executor(
                     None, _upload_file, content, filename, "audio"
                 )
                 await session.execute(
@@ -290,15 +289,11 @@ class ExhibitTranslationAdmin(ModelView, model=ExhibitTranslation):
                     .where(ExhibitTranslation.id == model.id)
                     .values(audio_url=url)
                 )
-                session.add(ExhibitAudioTrack(
-                    exhibit_id=model.exhibit_id, language=language,
-                    storage_path=key, public_url=url,
-                ))
                 self._pending_audio = None
 
             if self._pending_media:
                 content, filename = self._pending_media
-                key, url = await asyncio.get_event_loop().run_in_executor(
+                _, url = await asyncio.get_event_loop().run_in_executor(
                     None, _upload_file, content, filename, "media"
                 )
                 await session.execute(
@@ -306,10 +301,6 @@ class ExhibitTranslationAdmin(ModelView, model=ExhibitTranslation):
                     .where(ExhibitTranslation.id == model.id)
                     .values(media_url=url)
                 )
-                session.add(ExhibitMedia(
-                    exhibit_id=model.exhibit_id, storage_path=key,
-                    public_url=url, media_type="image", is_cover=False, sort_order=0,
-                ))
                 self._pending_media = None
 
             await session.commit()
