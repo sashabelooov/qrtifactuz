@@ -39,9 +39,9 @@ class Exhibit(Base):
     updated_at: Mapped[str] = mapped_column(server_default=func.now(), onupdate=func.now())
 
     museum: Mapped["Museum"] = relationship("Museum", back_populates="exhibits", lazy="noload")
-    translations: Mapped[list["ExhibitTranslation"]] = relationship("ExhibitTranslation", back_populates="exhibit", lazy="selectin", passive_deletes=True)
-    media: Mapped[list["ExhibitMedia"]] = relationship("ExhibitMedia", back_populates="exhibit", lazy="selectin", passive_deletes=True)
-    audio_tracks: Mapped[list["ExhibitAudioTrack"]] = relationship("ExhibitAudioTrack", back_populates="exhibit", lazy="selectin", passive_deletes=True)
+    translations: Mapped[list["ExhibitTranslation"]] = relationship("ExhibitTranslation", back_populates="exhibit", lazy="selectin", cascade="all, delete-orphan")
+    media: Mapped[list["ExhibitMedia"]] = relationship("ExhibitMedia", back_populates="exhibit", lazy="selectin", cascade="all, delete-orphan")
+    audio_tracks: Mapped[list["ExhibitAudioTrack"]] = relationship("ExhibitAudioTrack", back_populates="exhibit", lazy="selectin", cascade="all, delete-orphan")
 
     def __repr__(self) -> str:
         return self.slug
