@@ -1,8 +1,8 @@
 import uuid
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from app.models.museum import Country, City, Museum, Hall
-from app.schemas.museum import CountryCreate, CityCreate, MuseumCreate, MuseumUpdate, HallCreate
+from app.models.museum import Country, City, Museum
+from app.schemas.museum import CountryCreate, CityCreate, MuseumCreate, MuseumUpdate
 from app.core.exceptions import NotFoundException, BadRequestException
 
 
@@ -103,21 +103,3 @@ async def delete_museum(db: AsyncSession, museum_id: uuid.UUID) -> None:
     await db.commit()
 
 
-# ── Hall ──────────────────────────────────────────────────────────
-
-async def create_hall(db: AsyncSession, museum_id: uuid.UUID, data: HallCreate) -> Hall:
-    await get_museum_by_id(db, museum_id)
-    hall = Hall(museum_id=museum_id, **data.model_dump())
-    db.add(hall)
-    await db.commit()
-    await db.refresh(hall)
-    return hall
-
-
-async def delete_hall(db: AsyncSession, hall_id: uuid.UUID) -> None:
-    result = await db.execute(select(Hall).where(Hall.id == hall_id))
-    hall = result.scalar_one_or_none()
-    if not hall:
-        raise NotFoundException("Hall not found")
-    await db.delete(hall)
-    await db.commit()

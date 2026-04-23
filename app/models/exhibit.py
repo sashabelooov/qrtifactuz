@@ -29,7 +29,6 @@ class Exhibit(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     museum_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("museums.id", ondelete="CASCADE"), nullable=False, index=True)
-    hall_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("halls.id", ondelete="SET NULL"), nullable=True, index=True)
     created_by: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     slug: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, index=True)
     qr_code_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
@@ -40,7 +39,6 @@ class Exhibit(Base):
     updated_at: Mapped[str] = mapped_column(server_default=func.now(), onupdate=func.now())
 
     museum: Mapped["Museum"] = relationship("Museum", back_populates="exhibits", lazy="noload")
-    hall: Mapped["Hall | None"] = relationship("Hall", back_populates="exhibits", lazy="noload")
     translations: Mapped[list["ExhibitTranslation"]] = relationship("ExhibitTranslation", back_populates="exhibit", lazy="selectin")
     media: Mapped[list["ExhibitMedia"]] = relationship("ExhibitMedia", back_populates="exhibit", lazy="selectin")
     audio_tracks: Mapped[list["ExhibitAudioTrack"]] = relationship("ExhibitAudioTrack", back_populates="exhibit", lazy="selectin")

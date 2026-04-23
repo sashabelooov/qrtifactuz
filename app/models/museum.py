@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import String, Text, Boolean, ForeignKey, Integer
+from sqlalchemy import String, Text, Boolean, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 from sqlalchemy.dialects.postgresql import UUID
@@ -51,26 +51,7 @@ class Museum(Base):
     updated_at: Mapped[str] = mapped_column(server_default=func.now(), onupdate=func.now())
 
     city_rel: Mapped["City | None"] = relationship("City", back_populates="museums", lazy="selectin")
-    halls: Mapped[list["Hall"]] = relationship("Hall", back_populates="museum", lazy="selectin", cascade="all, delete-orphan", passive_deletes=True)
     exhibits: Mapped[list["Exhibit"]] = relationship("Exhibit", back_populates="museum", lazy="noload", cascade="all, delete-orphan", passive_deletes=True)
-
-    def __repr__(self) -> str:
-        return self.name
-
-
-class Hall(Base):
-    __tablename__ = "halls"
-
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    museum_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("museums.id", ondelete="CASCADE"), nullable=False, index=True)
-    name: Mapped[str] = mapped_column(String(255), nullable=False)
-    description: Mapped[str | None] = mapped_column(Text, nullable=True)
-    floor: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    created_at: Mapped[str] = mapped_column(server_default=func.now())
-    updated_at: Mapped[str] = mapped_column(server_default=func.now(), onupdate=func.now())
-
-    museum: Mapped["Museum"] = relationship("Museum", back_populates="halls", lazy="noload")
-    exhibits: Mapped[list["Exhibit"]] = relationship("Exhibit", back_populates="hall", lazy="noload")
 
     def __repr__(self) -> str:
         return self.name

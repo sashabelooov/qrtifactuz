@@ -3,6 +3,7 @@ from pydantic import BaseModel, ConfigDict
 from typing import Optional
 
 
+
 class CountryCreate(BaseModel):
     name: str
     code: Optional[str] = None
@@ -28,21 +29,6 @@ class CityResponse(BaseModel):
     name: str
     country_id: uuid.UUID
 
-
-class HallResponse(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: uuid.UUID
-    museum_id: uuid.UUID
-    name: str
-    description: Optional[str] = None
-    floor: Optional[int] = None
-
-
-class HallCreate(BaseModel):
-    name: str
-    description: Optional[str] = None
-    floor: Optional[int] = None
 
 
 class MuseumCreate(BaseModel):
@@ -74,4 +60,3 @@ class MuseumResponse(BaseModel):
     address: Optional[str] = None
     logo_url: Optional[str] = None
     is_active: bool
-    halls: list[HallResponse] = []

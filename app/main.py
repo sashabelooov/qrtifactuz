@@ -15,7 +15,7 @@ from markupsafe import Markup
 from wtforms import FileField
 from app.api.v1.museum.router import router as museums_router
 from app.models.user import User
-from app.models.museum import Country, City, Museum, Hall
+from app.models.museum import Country, City, Museum
 from fastapi.staticfiles import StaticFiles
 
 
@@ -175,7 +175,7 @@ class MuseumAdmin(ModelView, model=Museum):
             f'<img src="{m.qr_code_url}" style="width:180px;height:180px">'
         ) if m.qr_code_url else "Not generated yet",
     }
-    form_excluded_columns = ["created_at", "updated_at", "halls", "city_rel", "exhibits", "qr_code_url"]
+    form_excluded_columns = ["created_at", "updated_at", "city_rel", "exhibits", "qr_code_url"]
     can_delete = True
 
     async def after_model_change(self, data, model, is_created, request):
@@ -183,15 +183,6 @@ class MuseumAdmin(ModelView, model=Museum):
             from app.tasks.qr_tasks import generate_museum_qr
             generate_museum_qr.delay(str(model.id), model.slug)
 
-
-class HallAdmin(ModelView, model=Hall):
-    name = "Hall"
-    name_plural = "Halls"
-    icon = "fa-solid fa-door-open"
-    column_list = [Hall.name, Hall.museum, Hall.floor, Hall.created_at]
-    column_labels = {"museum": "Museum", "created_at": "Created"}
-    form_excluded_columns = ["created_at", "updated_at", "exhibits"]
-    can_delete = True
 
 
 class ExhibitAdmin(ModelView, model=Exhibit):
@@ -201,35 +192,14 @@ class ExhibitAdmin(ModelView, model=Exhibit):
     column_list = [Exhibit.slug, Exhibit.status, Exhibit.views_count, Exhibit.listens_count]
     column_searchable_list = [Exhibit.slug]
     column_labels = {
-        "museum": "Museum", "hall": "Hall",
+        "museum": "Museum",
         "views_count": "Views", "listens_count": "Listens",
-        "translations": "Translations", "media": "Images", "audio_tracks": "Audio",
+        "translations": "Translations",
     }
-    column_details_list = ["museum", "hall", "slug", "status", "translations", "media", "audio_tracks"]
+    column_details_list = ["museum", "slug", "status", "translations"]
     show_compact_lists = False
-    column_formatters_detail = {
-        "media": lambda m, a: [
-            Markup(
-                f'<img src="{item.public_url}" '
-                f'style="max-width:220px;max-height:160px;border-radius:6px;margin:4px;display:block">'
-            ) if item.public_url else Markup(repr(item))
-            for item in (m.media or [])
-        ],
-        "audio_tracks": lambda m, a: [
-            Markup(
-                f'<div style="margin:6px 0">'
-                f'<span style="font-size:11px;font-weight:bold;background:#e8e8e8;'
-                f'padding:2px 6px;border-radius:3px;display:inline-block;margin-bottom:4px">'
-                f'[{str(item.language).upper()}]</span><br>'
-                f'<audio controls style="width:280px">'
-                f'<source src="{item.public_url}" type="audio/mpeg">'
-                f'<source src="{item.public_url}" type="audio/ogg">'
-                f'Your browser does not support audio.</audio></div>'
-            ) if item.public_url else Markup(f'<span>[{item.language}] no file</span>')
-            for item in (m.audio_tracks or [])
-        ],
-    }
-    form_columns = ["museum", "hall", "slug", "status"]
+    column_formatters_detail = {}
+    form_columns = ["museum", "slug", "status"]
     can_delete = True
 
     async def after_model_change(self, data, model, is_created, request):
@@ -398,7 +368,6 @@ class ExhibitMediaAdmin(ModelView, model=ExhibitMedia):
 admin.add_view(CountryAdmin)
 admin.add_view(CityAdmin)
 admin.add_view(MuseumAdmin)
-admin.add_view(HallAdmin)
 admin.add_view(ExhibitAdmin)
 admin.add_view(ExhibitTranslationAdmin)
 admin.add_view(ExhibitMediaAdmin)
