@@ -239,27 +239,43 @@ class ExhibitTranslationAdmin(ModelView, model=ExhibitTranslation):
 
     column_default_sort = [("created_at", True)]
 
+    async def on_model_change(self, data, model, is_created, request):
+        # Read file content here while the multipart form is still fresh.
+        # We can't save to DB yet (no model.id on create), so store on self.
+        form = await request.form()
+        audio_file = form.get("audio_file")
+        media_file = form.get("media_file")
+
+        self._pending_audio = None
+        self._pending_media = None
+
+        if audio_file and getattr(audio_file, "filename", None):
+            content = await audio_file.read()
+            if content:
+                self._pending_audio = (content, audio_file.filename)
+
+        if media_file and getattr(media_file, "filename", None):
+            content = await media_file.read()
+            if content:
+                self._pending_media = (content, media_file.filename)
+
+        print(f"[TRANSLATION_ON_CHANGE] is_created={is_created} "
+              f"audio={self._pending_audio is not None} media={self._pending_media is not None}", flush=True)
+
     async def after_model_change(self, data, model, is_created, request):
         from app.core.database import engine
         from sqlalchemy.ext.asyncio import AsyncSession
         from sqlalchemy import update as sql_update
 
-        form = await request.form()
-        audio_file = form.get("audio_file")
-        media_file = form.get("media_file")
-
-        print(f"[TRANSLATION_UPLOAD] is_created={is_created} id={model.id} "
-              f"exhibit_id={model.exhibit_id} lang={model.language} "
-              f"audio={getattr(audio_file, 'filename', None)} "
-              f"media={getattr(media_file, 'filename', None)}", flush=True)
+        print(f"[TRANSLATION_AFTER_CHANGE] is_created={is_created} id={model.id}", flush=True)
 
         language = model.language.value if hasattr(model.language, "value") else model.language
 
         async with AsyncSession(engine) as session:
-            if audio_file and hasattr(audio_file, "filename") and audio_file.filename:
-                content = await audio_file.read()
+            if self._pending_audio:
+                content, filename = self._pending_audio
                 key, url = await asyncio.get_event_loop().run_in_executor(
-                    None, _upload_file, content, audio_file.filename, "audio"
+                    None, _upload_file, content, filename, "audio"
                 )
                 await session.execute(
                     sql_update(ExhibitTranslation)
@@ -270,12 +286,13 @@ class ExhibitTranslationAdmin(ModelView, model=ExhibitTranslation):
                     exhibit_id=model.exhibit_id, language=language,
                     storage_path=key, public_url=url,
                 ))
-                print(f"[TRANSLATION_UPLOAD] saved audio: {url}", flush=True)
+                self._pending_audio = None
+                print(f"[TRANSLATION_AFTER_CHANGE] saved audio: {url}", flush=True)
 
-            if media_file and hasattr(media_file, "filename") and media_file.filename:
-                content = await media_file.read()
+            if self._pending_media:
+                content, filename = self._pending_media
                 key, url = await asyncio.get_event_loop().run_in_executor(
-                    None, _upload_file, content, media_file.filename, "media"
+                    None, _upload_file, content, filename, "media"
                 )
                 await session.execute(
                     sql_update(ExhibitTranslation)
@@ -286,7 +303,8 @@ class ExhibitTranslationAdmin(ModelView, model=ExhibitTranslation):
                     exhibit_id=model.exhibit_id, storage_path=key,
                     public_url=url, media_type="image", is_cover=False, sort_order=0,
                 ))
-                print(f"[TRANSLATION_UPLOAD] saved media: {url}", flush=True)
+                self._pending_media = None
+                print(f"[TRANSLATION_AFTER_CHANGE] saved media: {url}", flush=True)
 
             await session.commit()
 
