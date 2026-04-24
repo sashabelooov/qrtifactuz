@@ -397,7 +397,12 @@ admin.add_view(UserAdmin)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.FRONTEND_URL, settings.BACKEND_URL],
+    allow_origins=[
+        settings.FRONTEND_URL,
+        settings.BACKEND_URL,
+        "http://localhost:3000",
+        "http://localhost:5173",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
