@@ -61,6 +61,9 @@ class ExhibitTranslation(Base):
 
     exhibit: Mapped["Exhibit"] = relationship("Exhibit", back_populates="translations", lazy="selectin")
 
+    audio_file = None
+    media_file = None
+
     def __repr__(self) -> str:
         return f"[{self.language}] {self.title}"
 
