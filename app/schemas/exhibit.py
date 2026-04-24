@@ -17,6 +17,8 @@ class ExhibitTranslationResponse(BaseModel):
     language: LanguageCode
     title: str
     description: Optional[str] = None
+    audio_url: Optional[str] = None
+    media_url: Optional[str] = None
 
 
 class ExhibitMediaResponse(BaseModel):
