@@ -196,12 +196,17 @@ class ExhibitAdmin(ModelView, model=Exhibit):
     column_labels = {
         "museum": "Museum",
         "slug": "Title",
+        "qr_code_url": "QR Code",
         "views_count": "Views", "listens_count": "Listens",
         "translations": "Translations",
     }
-    column_details_list = ["museum", "slug", "status", "translations"]
+    column_details_list = ["museum", "slug", "status", "qr_code_url", "translations"]
     show_compact_lists = False
     column_formatters_detail = {
+        "qr_code_url": lambda m, a: Markup(
+            f'<img src="{m.qr_code_url}" style="width:180px;height:180px">'
+            f'<br><small><a href="{m.qr_code_url}" target="_blank">Download QR</a></small>'
+        ) if m.qr_code_url else Markup('<span style="color:#9ca3af">Not generated yet</span>'),
         "translations": lambda m, a: [
             Markup(
                 f'<div style="border:1px solid #e5e7eb;border-radius:8px;padding:12px;margin:6px 0">'
