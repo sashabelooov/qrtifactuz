@@ -1,4 +1,5 @@
 import uuid
+from urllib.parse import quote
 from sqlalchemy import update
 from sqlalchemy.orm import Session
 from app.tasks.celery_app import celery_app
@@ -33,7 +34,7 @@ def generate_museum_qr(museum_id: str, museum_slug: str):
 @celery_app.task
 def generate_exhibit_qr(exhibit_id: str, exhibit_slug: str):
     from app.models.exhibit import Exhibit
-    url = f"{settings.FRONTEND_URL}/exhibit/{exhibit_slug}"
+    url = f"{settings.FRONTEND_URL}/exhibit/{quote(exhibit_slug, safe='')}"
     png = generate_qr_png(url)
     qr_url = save_qr_locally(png, f"exhibit_{exhibit_id}.png")
     _save_sync(Exhibit, exhibit_id, qr_url)
