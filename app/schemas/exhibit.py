@@ -43,11 +43,13 @@ class ExhibitAudioTrackResponse(BaseModel):
 class ExhibitCreate(BaseModel):
     museum_id: uuid.UUID
     slug: str
+    city: Optional[str] = None
     translations: list[ExhibitTranslationCreate] = []
 
 
 class ExhibitUpdate(BaseModel):
     slug: Optional[str] = None
+    city: Optional[str] = None
     status: Optional[ExhibitStatus] = None
     translations: Optional[list[ExhibitTranslationCreate]] = None
 
@@ -58,13 +60,12 @@ class ExhibitResponse(BaseModel):
     id: uuid.UUID
     museum_id: uuid.UUID
     slug: str
+    city: Optional[str] = None
     qr_code_url: Optional[str] = None
     status: ExhibitStatus
     views_count: int
     listens_count: int
     translations: list[ExhibitTranslationResponse] = []
-    media: list[ExhibitMediaResponse] = []
-    audio_tracks: list[ExhibitAudioTrackResponse] = []
 
 
 class ExhibitStatusUpdate(BaseModel):

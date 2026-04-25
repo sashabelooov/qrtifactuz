@@ -10,12 +10,12 @@ Session = async_sessionmaker(engine, class_=AsyncSession)
 
 async def main():
     from app.models.exhibit import Exhibit
-    from app.tasks.qr_tasks import generate_qr_png as generate_qr_code
+    from app.tasks.qr_tasks import generate_exhibit_qr
     async with Session() as session:
         result = await session.execute(select(Exhibit))
         exhibits = result.scalars().all()
         for e in exhibits:
-            generate_qr_code.delay(str(e.id))
+            generate_exhibit_qr.delay(str(e.id), e.slug)
             print("Queued:", e.slug)
 
 
