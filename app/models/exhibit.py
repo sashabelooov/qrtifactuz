@@ -31,6 +31,7 @@ class Exhibit(Base):
     museum_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("museums.id", ondelete="CASCADE"), nullable=False, index=True)
     created_by: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     slug: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, index=True)
+    city: Mapped[str | None] = mapped_column(String(255), nullable=True)
     qr_code_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     status: Mapped[ExhibitStatus] = mapped_column(Enum(ExhibitStatus), default=ExhibitStatus.draft)
     views_count: Mapped[int] = mapped_column(Integer, default=0)
