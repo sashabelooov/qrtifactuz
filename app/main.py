@@ -13,6 +13,7 @@ from sqladmin.authentication import AuthenticationBackend
 from starlette.requests import Request
 from markupsafe import Markup
 from wtforms import FileField
+from wtforms.validators import DataRequired
 from app.api.v1.museum.router import router as museums_router
 from app.models.user import User
 from app.models.museum import Country, City, Museum
@@ -175,7 +176,8 @@ class MuseumAdmin(ModelView, model=Museum):
             f'<img src="{m.qr_code_url}" style="width:180px;height:180px">'
         ) if m.qr_code_url else "Not generated yet",
     }
-    form_excluded_columns = ["created_at", "updated_at", "city_rel", "exhibits", "qr_code_url"]
+    form_excluded_columns = ["created_at", "updated_at", "exhibits", "qr_code_url"]
+    form_args = {"city_rel": {"validators": [DataRequired(message="City is required")]}}
     can_delete = True
 
     async def after_model_change(self, data, model, is_created, request):
