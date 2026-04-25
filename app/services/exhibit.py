@@ -2,8 +2,28 @@ import uuid
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update
 from app.models.exhibit import Exhibit, ExhibitTranslation, ExhibitStatus
+from app.models.museum import Museum, City
 from app.schemas.exhibit import ExhibitCreate, ExhibitUpdate, ExhibitStatusUpdate
 from app.core.exceptions import NotFoundException, BadRequestException
+
+
+def _with_city(query):
+    return (
+        query
+        .join(Museum, Exhibit.museum_id == Museum.id)
+        .outerjoin(City, Museum.city_id == City.id)
+        .add_columns(City.name.label("city_name"))
+    )
+
+
+def _apply_city(rows) -> list[Exhibit]:
+    exhibits = []
+    for row in rows:
+        exhibit = row[0]
+        city_name = row[1]
+        exhibit.city = city_name
+        exhibits.append(exhibit)
+    return exhibits
 
 
 async def get_all_exhibits(
@@ -11,7 +31,7 @@ async def get_all_exhibits(
     museum_id: uuid.UUID | None = None,
     status: ExhibitStatus | None = None,
 ) -> list[Exhibit]:
-    query = select(Exhibit)
+    query = _with_city(select(Exhibit))
 
     if museum_id:
         query = query.where(Exhibit.museum_id == museum_id)
@@ -19,22 +39,26 @@ async def get_all_exhibits(
         query = query.where(Exhibit.status == status)
 
     result = await db.execute(query)
-    return result.scalars().all()
+    return _apply_city(result.all())
 
 
 async def get_exhibit_by_slug(db: AsyncSession, slug: str) -> Exhibit:
-    result = await db.execute(select(Exhibit).where(Exhibit.slug == slug))
-    exhibit = result.scalar_one_or_none()
-    if not exhibit:
+    result = await db.execute(_with_city(select(Exhibit)).where(Exhibit.slug == slug))
+    row = result.one_or_none()
+    if not row:
         raise NotFoundException("Exhibit not found")
+    exhibit, city_name = row
+    exhibit.city = city_name
     return exhibit
 
 
 async def get_exhibit_by_id(db: AsyncSession, exhibit_id: uuid.UUID) -> Exhibit:
-    result = await db.execute(select(Exhibit).where(Exhibit.id == exhibit_id))
-    exhibit = result.scalar_one_or_none()
-    if not exhibit:
+    result = await db.execute(_with_city(select(Exhibit)).where(Exhibit.id == exhibit_id))
+    row = result.one_or_none()
+    if not row:
         raise NotFoundException("Exhibit not found")
+    exhibit, city_name = row
+    exhibit.city = city_name
     return exhibit
 
 
@@ -49,7 +73,6 @@ async def create_exhibit(
 
     exhibit = Exhibit(
         museum_id=data.museum_id,
-        hall_id=data.hall_id,
         slug=data.slug,
         created_by=created_by,
     )
