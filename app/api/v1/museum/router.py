@@ -6,7 +6,7 @@ from app.core.dependencies import get_current_admin
 from app.schemas.museum import (
     CountryCreate, CountryResponse,
     CityCreate, CityResponse,
-    MuseumCreate, MuseumUpdate, MuseumResponse,
+    MuseumCreate, MuseumUpdate, MuseumResponse, MuseumDetailResponse,
 )
 from app.services import museum as museum_service
 router = APIRouter()
@@ -52,10 +52,21 @@ async def list_museums(db: AsyncSession = Depends(get_db)):
     response_model=MuseumResponse,
     tags=["Museums"],
     summary="Get museum by ID",
-    description="Returns a single museum with full details including all its halls.",
+    description="Returns a single museum with full details.",
 )
 async def get_museum(museum_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     return await museum_service.get_museum_by_id(db, museum_id)
+
+
+@router.get(
+    "/museums/{museum_id}/exhibits",
+    response_model=MuseumDetailResponse,
+    tags=["Museums"],
+    summary="Get museum with all its exhibits",
+    description="Returns museum info plus all published exhibits with translations, audio, and media.",
+)
+async def get_museum_with_exhibits(museum_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    return await museum_service.get_museum_with_exhibits(db, museum_id)
 
 
 # ── Admin endpoints ───────────────────────────────────────────────

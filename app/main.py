@@ -175,12 +175,45 @@ class MuseumAdmin(ModelView, model=Museum):
         "qr_code_url": lambda m, a: Markup(
             f'<img src="{m.qr_code_url}" style="width:180px;height:180px">'
         ) if m.qr_code_url else "Not generated yet",
+        "logo_url": lambda m, a: Markup(
+            f'<img src="{m.logo_url}" style="max-width:200px;max-height:150px;border-radius:6px">'
+        ) if m.logo_url else "",
     }
-    form_excluded_columns = ["created_at", "updated_at", "exhibits", "qr_code_url"]
+    form_excluded_columns = ["created_at", "updated_at", "exhibits", "qr_code_url", "logo_url"]
     form_args = {"city_rel": {"validators": [DataRequired(message="City is required")]}}
     can_delete = True
 
+    async def scaffold_form(self, rules=None):
+        form_class = await super().scaffold_form(rules)
+        form_class.logo_file = FileField("Logo Image")
+        return form_class
+
+    async def on_model_change(self, data, model, is_created, request):
+        form = await request.form()
+        logo_file = form.get("logo_file")
+        self._pending_logo = None
+        if logo_file and getattr(logo_file, "filename", None):
+            content = await logo_file.read()
+            if content:
+                self._pending_logo = (content, logo_file.filename)
+
     async def after_model_change(self, data, model, is_created, request):
+        from app.core.database import engine
+        from sqlalchemy.ext.asyncio import AsyncSession
+        from sqlalchemy import update as sql_update
+
+        if getattr(self, "_pending_logo", None):
+            content, filename = self._pending_logo
+            _, url = await asyncio.get_event_loop().run_in_executor(
+                None, _upload_file, content, filename, "logos"
+            )
+            async with AsyncSession(engine) as session:
+                await session.execute(
+                    sql_update(Museum).where(Museum.id == model.id).values(logo_url=url)
+                )
+                await session.commit()
+            self._pending_logo = None
+
         if is_created:
             from app.tasks.qr_tasks import generate_museum_qr
             generate_museum_qr.delay(str(model.id), model.slug)
