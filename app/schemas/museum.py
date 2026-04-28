@@ -1,6 +1,7 @@
 import uuid
 from pydantic import BaseModel, ConfigDict
 from typing import Optional
+from app.schemas.exhibit import ExhibitResponse
 
 
 
@@ -56,7 +57,12 @@ class MuseumResponse(BaseModel):
     name: str
     slug: str
     city_id: Optional[uuid.UUID] = None
+    city: Optional[str] = None
     description: Optional[str] = None
     address: Optional[str] = None
     logo_url: Optional[str] = None
     is_active: bool
+
+
+class MuseumDetailResponse(MuseumResponse):
+    exhibits: list[ExhibitResponse] = []

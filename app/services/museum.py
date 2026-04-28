@@ -75,6 +75,25 @@ async def get_museum_by_id(db: AsyncSession, museum_id: uuid.UUID) -> Museum:
     return museum
 
 
+async def get_museum_with_exhibits(db: AsyncSession, museum_id: uuid.UUID) -> dict:
+    museum = await get_museum_by_id(db, museum_id)
+    from app.services.exhibit import get_all_exhibits
+    from app.models.exhibit import ExhibitStatus
+    exhibits = await get_all_exhibits(db, museum_id=museum_id, status=ExhibitStatus.published)
+    return {
+        "id": museum.id,
+        "name": museum.name,
+        "slug": museum.slug,
+        "city_id": museum.city_id,
+        "city": museum.city_rel.name if museum.city_rel else None,
+        "description": museum.description,
+        "address": museum.address,
+        "logo_url": museum.logo_url,
+        "is_active": museum.is_active,
+        "exhibits": exhibits,
+    }
+
+
 async def create_museum(db: AsyncSession, data: MuseumCreate) -> Museum:
     existing = await db.execute(select(Museum).where(Museum.slug == data.slug))
     if existing.scalar_one_or_none():
