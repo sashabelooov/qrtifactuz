@@ -489,6 +489,146 @@ app.add_middleware(
 
 app.add_exception_handler(AppException, app_exception_handler)
 
+
+# ── Admin: QR Codes page ──────────────────────────────────────────
+
+@app.get("/admin/qr-codes", include_in_schema=False)
+async def admin_qr_codes(request: Request, museum_id: str = None):
+    if not request.session.get("admin"):
+        return RedirectResponse("/admin/login")
+
+    from sqlalchemy.ext.asyncio import AsyncSession
+    from sqlalchemy import select as sa_select
+
+    async with AsyncSession(engine) as db:
+        museums_result = await db.execute(sa_select(Museum).order_by(Museum.name))
+        museums = museums_result.scalars().all()
+
+        selected_museum = None
+        exhibits = []
+        if museum_id:
+            m_result = await db.execute(sa_select(Museum).where(Museum.id == museum_id))
+            selected_museum = m_result.scalar_one_or_none()
+            if selected_museum:
+                e_result = await db.execute(
+                    sa_select(Exhibit).where(Exhibit.museum_id == selected_museum.id)
+                )
+                exhibits = e_result.scalars().all()
+
+    museum_items = "".join(
+        f'<a href="/admin/qr-codes?museum_id={m.id}" '
+        f'class="list-group-item list-group-item-action{"  active" if selected_museum and str(m.id) == museum_id else ""}">'
+        f'{m.name}</a>'
+        for m in museums
+    )
+
+    def qr_card(name, qr_url, filename):
+        if not qr_url:
+            return ""
+        dl_name = filename.replace(" ", "_") + ".png"
+        return f'''
+        <div class="col-6 col-md-4 col-lg-3 mb-4">
+          <div class="card h-100 shadow-sm">
+            <img src="{qr_url}" class="card-img-top p-2" style="width:100%;aspect-ratio:1">
+            <div class="card-body p-2">
+              <p class="card-text small text-truncate mb-2" title="{name}">{name}</p>
+              <a href="{qr_url}" download="{dl_name}" class="btn btn-sm btn-outline-primary w-100">
+                <i class="fa fa-download"></i> Download
+              </a>
+            </div>
+          </div>
+        </div>'''
+
+    qr_grid = ""
+    zip_btn = ""
+    if selected_museum:
+        qr_grid += qr_card(f"[Museum] {selected_museum.name}", selected_museum.qr_code_url, f"museum_{selected_museum.name}")
+        for e in exhibits:
+            label = e.slug
+            qr_grid += qr_card(label, e.qr_code_url, label)
+        zip_btn = f'''
+        <a href="/admin/qr-codes/{museum_id}/zip" class="btn btn-success mb-3">
+          <i class="fa fa-file-zipper"></i> Download All as ZIP
+        </a>'''
+
+    content = f'''
+    <div class="row" style="min-height:80vh">
+      <div class="col-md-3 border-end pe-0">
+        <div class="p-3 fw-bold border-bottom">Museums</div>
+        <div class="list-group list-group-flush">{museum_items}</div>
+      </div>
+      <div class="col-md-9 p-4">
+        {"<h5 class='mb-3'>" + selected_museum.name + " — QR Codes</h5>" + zip_btn if selected_museum else "<p class='text-muted'>Select a museum from the left to view its QR codes.</p>"}
+        <div class="row">{qr_grid}</div>
+      </div>
+    </div>'''
+
+    html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>QR Codes — Admin</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    body {{ background:#f8f9fa; }}
+    .sidebar {{ background:#fff; min-height:100vh; border-right:1px solid #dee2e6; }}
+    .list-group-item.active {{ background:#0d6efd; border-color:#0d6efd; }}
+    .navbar {{ background:#212529 !important; }}
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-dark px-3 py-2 mb-0">
+    <span class="navbar-brand fw-bold"><i class="fa fa-qrcode me-2"></i>QR Codes</span>
+    <a href="/admin" class="btn btn-sm btn-outline-light">← Admin Panel</a>
+  </nav>
+  <div class="container-fluid p-0">{content}</div>
+</body>
+</html>"""
+    from fastapi.responses import HTMLResponse
+    return HTMLResponse(html)
+
+
+@app.get("/admin/qr-codes/{museum_id}/zip", include_in_schema=False)
+async def download_qr_zip(museum_id: str, request: Request):
+    import zipfile, io, os
+    from fastapi.responses import StreamingResponse
+    from sqlalchemy.ext.asyncio import AsyncSession
+    from sqlalchemy import select as sa_select
+
+    if not request.session.get("admin"):
+        return RedirectResponse("/admin/login")
+
+    async with AsyncSession(engine) as db:
+        m_result = await db.execute(sa_select(Museum).where(Museum.id == museum_id))
+        museum = m_result.scalar_one_or_none()
+        if not museum:
+            return HTMLResponse("Museum not found", status_code=404)
+        e_result = await db.execute(sa_select(Exhibit).where(Exhibit.museum_id == museum.id))
+        exhibits = e_result.scalars().all()
+
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+        def add_qr(url, arcname):
+            if not url:
+                return
+            local = url.replace(settings.BACKEND_URL + "/", "")
+            if os.path.exists(local):
+                zf.write(local, arcname)
+
+        add_qr(museum.qr_code_url, f"museum_{museum.name}.png")
+        for e in exhibits:
+            safe_name = e.slug.replace("/", "_").replace("\\", "_")
+            add_qr(e.qr_code_url, f"{safe_name}.png")
+
+    buf.seek(0)
+    safe_museum = museum.name.replace(" ", "_")
+    return StreamingResponse(
+        buf,
+        media_type="application/zip",
+        headers={"Content-Disposition": f'attachment; filename="{safe_museum}_qr_codes.zip"'},
+    )
+
 app.include_router(auth_router, prefix="/api/v1")
 app.include_router(profiles_router, prefix="/api/v1")
 app.include_router(museums_router, prefix="/api/v1")
