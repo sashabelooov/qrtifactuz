@@ -1,0 +1,72 @@
+{% extends "sqladmin/layout.html" %}
+{% block content %}
+<div class="col-12">
+  <div class="row" style="min-height:70vh">
+
+    {# Left: museum list #}
+    <div class="col-md-3 border-end pe-0">
+      <div class="p-3 fw-bold border-bottom bg-light">Museums</div>
+      <div class="list-group list-group-flush">
+        {% for m in museums %}
+        <a href="/admin/qr-codes?museum_id={{ m.id }}"
+           class="list-group-item list-group-item-action{% if selected_museum and m.id|string == museum_id %} active{% endif %}">
+          {{ m.name }}
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+
+    {# Right: QR grid #}
+    <div class="col-md-9 p-4">
+      {% if selected_museum %}
+        <div class="d-flex align-items-center justify-content-between mb-3">
+          <h5 class="mb-0">{{ selected_museum.name }} — QR Codes</h5>
+          <a href="/admin/qr-codes/{{ selected_museum.id }}/zip" class="btn btn-success btn-sm">
+            <i class="fa fa-file-zipper me-1"></i> Download All as ZIP
+          </a>
+        </div>
+        <div class="row">
+
+          {# Museum QR #}
+          {% if selected_museum.qr_code_url %}
+          <div class="col-6 col-md-4 col-lg-3 mb-4">
+            <div class="card h-100 shadow-sm">
+              <img src="{{ selected_museum.qr_code_url }}" class="card-img-top p-2" style="width:100%;aspect-ratio:1">
+              <div class="card-body p-2">
+                <p class="card-text small text-truncate mb-2 fw-semibold" title="[Museum] {{ selected_museum.name }}">[Museum] {{ selected_museum.name }}</p>
+                <a href="{{ selected_museum.qr_code_url }}" download="museum_{{ selected_museum.name }}.png"
+                   class="btn btn-sm btn-outline-primary w-100">
+                  <i class="fa fa-download"></i> Download
+                </a>
+              </div>
+            </div>
+          </div>
+          {% endif %}
+
+          {# Exhibit QRs #}
+          {% for e in exhibits %}
+          {% if e.qr_code_url %}
+          <div class="col-6 col-md-4 col-lg-3 mb-4">
+            <div class="card h-100 shadow-sm">
+              <img src="{{ e.qr_code_url }}" class="card-img-top p-2" style="width:100%;aspect-ratio:1">
+              <div class="card-body p-2">
+                <p class="card-text small text-truncate mb-2" title="{{ e.slug }}">{{ e.slug }}</p>
+                <a href="{{ e.qr_code_url }}" download="{{ e.slug }}.png"
+                   class="btn btn-sm btn-outline-primary w-100">
+                  <i class="fa fa-download"></i> Download
+                </a>
+              </div>
+            </div>
+          </div>
+          {% endif %}
+          {% endfor %}
+
+        </div>
+      {% else %}
+        <p class="text-muted mt-3">Select a museum from the left to view its QR codes.</p>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+{% endblock %}
