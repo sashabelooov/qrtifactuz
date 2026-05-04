@@ -2,7 +2,7 @@ import uuid
 from pydantic import BaseModel, ConfigDict
 from typing import Optional
 from app.schemas.exhibit import ExhibitResponse
-
+from app.models.museum import LanguageCode
 
 
 class CountryCreate(BaseModel):
@@ -18,9 +18,23 @@ class CountryResponse(BaseModel):
     code: Optional[str] = None
 
 
+class CityTranslationCreate(BaseModel):
+    language: LanguageCode
+    name: str
+
+
+class CityTranslationResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    language: LanguageCode
+    name: str
+
+
 class CityCreate(BaseModel):
     name: str
     country_id: uuid.UUID
+    translations: list[CityTranslationCreate] = []
 
 
 class CityResponse(BaseModel):
@@ -29,7 +43,7 @@ class CityResponse(BaseModel):
     id: uuid.UUID
     name: str
     country_id: uuid.UUID
-
+    translations: list[CityTranslationResponse] = []
 
 
 class MuseumCreate(BaseModel):
@@ -39,6 +53,8 @@ class MuseumCreate(BaseModel):
     description: Optional[str] = None
     address: Optional[str] = None
     logo_url: Optional[str] = None
+    working_days: Optional[str] = None
+    working_hours: Optional[str] = None
 
 
 class MuseumUpdate(BaseModel):
@@ -47,6 +63,8 @@ class MuseumUpdate(BaseModel):
     description: Optional[str] = None
     address: Optional[str] = None
     logo_url: Optional[str] = None
+    working_days: Optional[str] = None
+    working_hours: Optional[str] = None
     is_active: Optional[bool] = None
 
 
@@ -61,6 +79,8 @@ class MuseumResponse(BaseModel):
     description: Optional[str] = None
     address: Optional[str] = None
     logo_url: Optional[str] = None
+    working_days: Optional[str] = None
+    working_hours: Optional[str] = None
     is_active: bool
 
 

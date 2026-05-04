@@ -1,7 +1,7 @@
 import uuid
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from app.models.museum import Country, City, Museum
+from app.models.museum import Country, City, Museum, CityTranslation
 from app.schemas.museum import CountryCreate, CityCreate, MuseumCreate, MuseumUpdate
 from app.core.exceptions import NotFoundException, BadRequestException
 
@@ -44,8 +44,12 @@ async def create_city(db: AsyncSession, data: CityCreate) -> City:
     country = await db.execute(select(Country).where(Country.id == data.country_id))
     if not country.scalar_one_or_none():
         raise NotFoundException("Country not found")
-    city = City(**data.model_dump())
+    translations = data.translations
+    city = City(**data.model_dump(exclude={"translations"}))
     db.add(city)
+    await db.flush()
+    for t in translations:
+        db.add(CityTranslation(city_id=city.id, **t.model_dump()))
     await db.commit()
     await db.refresh(city)
     return city

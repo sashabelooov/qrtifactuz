@@ -16,7 +16,7 @@ from wtforms import FileField
 from wtforms.validators import DataRequired
 from app.api.v1.museum.router import router as museums_router
 from app.models.user import User
-from app.models.museum import Country, City, Museum
+from app.models.museum import Country, City, Museum, CityTranslation
 from fastapi.staticfiles import StaticFiles
 
 
@@ -159,7 +159,17 @@ class CityAdmin(ModelView, model=City):
     column_list = [City.name, City.country, City.created_at]
     column_searchable_list = [City.name]
     column_labels = {"country": "Country", "created_at": "Created"}
-    form_excluded_columns = ["created_at", "museums"]
+    form_excluded_columns = ["created_at", "museums", "translations"]
+    can_delete = True
+
+
+class CityTranslationAdmin(ModelView, model=CityTranslation):
+    name = "City Translation"
+    name_plural = "City Translations"
+    icon = "fa-solid fa-language"
+    column_list = [CityTranslation.city, CityTranslation.language, CityTranslation.name]
+    column_labels = {"city": "City", "language": "Language", "name": "Name"}
+    form_columns = ["city", "language", "name"]
     can_delete = True
 
 
@@ -426,6 +436,7 @@ class ExhibitMediaAdmin(ModelView, model=ExhibitMedia):
 
 admin.add_view(CountryAdmin)
 admin.add_view(CityAdmin)
+admin.add_view(CityTranslationAdmin)
 admin.add_view(MuseumAdmin)
 admin.add_view(ExhibitAdmin)
 admin.add_view(ExhibitTranslationAdmin)
