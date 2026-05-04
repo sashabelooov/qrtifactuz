@@ -1,16 +1,10 @@
 import uuid
-import enum
 from sqlalchemy import String, Text, Boolean, ForeignKey, Enum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 from sqlalchemy.dialects.postgresql import UUID
 from app.core.database import Base
-
-
-class LanguageCode(str, enum.Enum):
-    uz = "uz"
-    ru = "ru"
-    en = "en"
+from app.models.exhibit import LanguageCode
 
 
 class Country(Base):
