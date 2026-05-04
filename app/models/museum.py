@@ -1,9 +1,16 @@
 import uuid
-from sqlalchemy import String, Text, Boolean, ForeignKey
+import enum
+from sqlalchemy import String, Text, Boolean, ForeignKey, Enum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 from sqlalchemy.dialects.postgresql import UUID
 from app.core.database import Base
+
+
+class LanguageCode(str, enum.Enum):
+    uz = "uz"
+    ru = "ru"
+    en = "en"
 
 
 class Country(Base):
@@ -30,9 +37,24 @@ class City(Base):
 
     country: Mapped["Country"] = relationship("Country", back_populates="cities", lazy="noload")
     museums: Mapped[list["Museum"]] = relationship("Museum", back_populates="city_rel", lazy="noload")
+    translations: Mapped[list["CityTranslation"]] = relationship("CityTranslation", back_populates="city", lazy="selectin", cascade="all, delete-orphan")
 
     def __repr__(self) -> str:
         return self.name
+
+
+class CityTranslation(Base):
+    __tablename__ = "city_translations"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    city_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("cities.id", ondelete="CASCADE"), nullable=False, index=True)
+    language: Mapped[LanguageCode] = mapped_column(Enum(LanguageCode), nullable=False)
+    name: Mapped[str] = mapped_column(String(100), nullable=False)
+
+    city: Mapped["City"] = relationship("City", back_populates="translations", lazy="noload")
+
+    def __repr__(self) -> str:
+        return f"[{self.language}] {self.name}"
 
 
 class Museum(Base):
@@ -46,6 +68,8 @@ class Museum(Base):
     address: Mapped[str | None] = mapped_column(String(500), nullable=True)
     logo_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     qr_code_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    working_days: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    working_hours: Mapped[str | None] = mapped_column(String(100), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[str] = mapped_column(server_default=func.now())
     updated_at: Mapped[str] = mapped_column(server_default=func.now(), onupdate=func.now())
