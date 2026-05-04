@@ -12,7 +12,7 @@ from sqladmin import Admin, ModelView
 from sqladmin.authentication import AuthenticationBackend
 from starlette.requests import Request
 from markupsafe import Markup
-from wtforms import FileField
+from wtforms import FileField, SelectField
 from wtforms.validators import DataRequired
 from app.api.v1.museum.router import router as museums_router
 from app.models.user import User
@@ -190,7 +190,35 @@ class MuseumAdmin(ModelView, model=Museum):
         ) if m.logo_url else "",
     }
     form_excluded_columns = ["created_at", "updated_at", "exhibits", "qr_code_url", "logo_url"]
-    form_args = {"city_rel": {"validators": [DataRequired(message="City is required")]}}
+    form_overrides = {"working_days": SelectField, "working_hours": SelectField}
+    form_args = {
+        "city_rel": {"validators": [DataRequired(message="City is required")]},
+        "working_days": {
+            "choices": [
+                ("", "— Not set —"),
+                ("Monday - Friday", "Monday - Friday"),
+                ("Monday - Saturday", "Monday - Saturday"),
+                ("Monday - Sunday", "Monday - Sunday"),
+                ("Tuesday - Sunday", "Tuesday - Sunday"),
+                ("Wednesday - Sunday", "Wednesday - Sunday"),
+                ("Everyday", "Everyday"),
+            ],
+            "coerce": str,
+        },
+        "working_hours": {
+            "choices": [
+                ("", "— Not set —"),
+                ("08:00 - 17:00", "08:00 - 17:00"),
+                ("09:00 - 17:00", "09:00 - 17:00"),
+                ("09:00 - 18:00", "09:00 - 18:00"),
+                ("09:00 - 19:00", "09:00 - 19:00"),
+                ("10:00 - 18:00", "10:00 - 18:00"),
+                ("10:00 - 19:00", "10:00 - 19:00"),
+                ("10:00 - 20:00", "10:00 - 20:00"),
+            ],
+            "coerce": str,
+        },
+    }
     can_delete = True
 
     async def scaffold_form(self, rules=None):
