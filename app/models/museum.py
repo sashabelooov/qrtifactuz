@@ -71,5 +71,9 @@ class Museum(Base):
     city_rel: Mapped["City | None"] = relationship("City", back_populates="museums", lazy="selectin")
     exhibits: Mapped[list["Exhibit"]] = relationship("Exhibit", back_populates="museum", lazy="noload", cascade="all, delete-orphan", passive_deletes=True)
 
+    @property
+    def city(self) -> str | None:
+        return self.city_rel.name if self.city_rel else None
+
     def __repr__(self) -> str:
         return self.name
